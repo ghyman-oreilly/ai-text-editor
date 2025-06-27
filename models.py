@@ -1,6 +1,9 @@
 from pathlib import Path
 from pydantic import basemodel
-from typing import List, Optional
+from typing import List, Literal, Optional
+
+
+TextFileFormat = Literal["asciidoc"]
 
 
 class TextBlock(basemodel):
@@ -8,25 +11,36 @@ class TextBlock(basemodel):
 	file_id: str
 	block_id: str
 	original_content: str
-	ai_edited_content: str
+	ai_edited_content: str = ''
 	is_processed: bool = False
 
 
 class TextFile(basemodel):
+	file_format: TextFileFormat
 	id: str
 	filepath: Path
 	text_blocks: Optional[List[TextBlock]] = []
 
 	@property
 	def is_fully_processed(self):
+		"""
+		Check whether all text blocks in file are processed
+		"""
 		return all([b.is_processed for b in self.text_blocks])
 
 	@property
 	def original_content(self):
+		"""
+		Get original content for the entire file
+		"""
 		return '\n'.join([b.original_content for b in self.text_blocks])
 
 	@property
 	def ai_edited_content(self):
+		"""
+		Get AI-edited content for the entire file, falling back to
+		original content if text block not yet edited
+		"""
 		return '\n'.join([b.ai_edited_content or b.original_content for b in self.text_blocks])
 
 
@@ -35,5 +49,4 @@ class AsciiBlock(TextBlock):
 
 
 class AsciiFile(TextFile):
-	pass
-
+	file_format: TextFileFormat = "asciidoc"

@@ -1,8 +1,14 @@
 import click
 import json
 import logging
+import os
 from pathlib import Path
 import sys
+import time
+from typing import List, Optional
+
+from helpers import check_asciidoctor_installed, detect_format
+from models import AsciiFile, TextFileFormat
 
 
 # config root logger
@@ -93,6 +99,27 @@ def resolve_input_paths(
     return resolved_files
 
 
+def sort_chapter_files_by_json_file_list(chapter_filepaths: list[Path], json_file_list_filepaths: list[Path] | None = None) -> list[Path]:
+    """
+    Sort chapter_filepaths according to relative paths in JSON file list.
+    Files not in json_file_list_filepaths will come after, sorted alphabetically.
+    If json_file_list_filepaths is None or empty, sort chapter_filepaths alphabetically.
+    """
+
+    if not json_file_list_filepaths:
+        # Sort alphabetically by filename (or full path)
+        return sorted(chapter_filepaths, key=lambda p: p.name.lower())  # or p.as_posix().lower()
+
+    # Create a lookup map from filename (or relative path) to order
+    file_list_order = {Path(p).name: i for i, p in enumerate(json_file_list_filepaths)}
+
+    def sort_key(path: Path):
+        # If path.name is in atlas, return its order. Otherwise, sort after all atlas items.
+        return (file_list_order.get(path.name, float('inf')), path.name.lower())
+
+    return sorted(chapter_filepaths, key=sort_key)
+
+
 @click.command(help="""
 Provide one of the following:
 (1) path to a directory containing Asciidoc files,
@@ -102,9 +129,54 @@ Provide one of the following:
 @click.version_option(version='1.0.0')
 @click.argument("input_paths", nargs=-1)
 def cli(input_paths):
-    """Script for using AI to edit documents in alignment with an editorial stylesheet."""
-    pass
+    """Script for using AI to edit documents in alignment with an editorial stylesheet."""    
+    chapter_filepaths = resolve_input_paths(input_paths)  
+    project_dir = chapter_filepaths[0].parent
+    cwd = Path(os.getcwd())
+    backup_data_filepath = Path(cwd / f"{'backup_' + str(int(time.time())) + '.json'}")
+
+    # look for JSON filelist for sorting chapter files
+    speculative_atlas_json_filepath = Path(project_dir / "atlas.json")
+    atlas_filepaths = None
+
+    if speculative_atlas_json_filepath.exists:
+        atlas_filepaths = read_json_file_list(speculative_atlas_json_filepath)
+
+    # sort by filelist or alpha
+    sorted_filepaths = sort_chapter_files_by_json_file_list(chapter_filepaths, atlas_filepaths)
+
+    filelist_str = '\n'.join([str(f) for f in sorted_filepaths])
+
+    click.echo(f"Files to be processed include:\n{filelist_str}")
     
+    if not click.prompt("Do you wish to continue? (y/n)").strip().lower() in ['y', 'yes']:
+        click.echo("Exiting.")
+        sys.exit(0)
+
+    # asciidoc notice and prep
+    if any(f.name.lower().endswith(('.asciidoc', '.adoc')) for f in sorted_filepaths):
+        click.echo("Project contains asciidoc files. Please be patient as asciidoc files are converted to html in memory.")
+        click.echo("This will not convert your actual asciidoc files to html.")
+        check_asciidoctor_installed()
+    else:
+        click.echo("\nProgress: Script is running. This may take up to several minutes to complete. Please wait...\n")
+
+    files_to_skip = [] # for use with potential future HTML use case
+
+    all_text_files: Optional[List[AsciiFile]] = []
+
+    # collect chapter data
+    for filepath in sorted_filepaths:
+        click.echo(f"Extracting text data from {filepath}...")
+        if all(skip_str not in filepath.name for skip_str in files_to_skip):
+            file_format: TextFileFormat = detect_format(filepath)
+            text_content = None
+            with open(filepath, 'r', encoding='utf-8') as f:
+                text_content = f.read()
+            if text_content and file_format == 'asciidoc':
+                all_text_files.append()
+
+
 
 if __name__ == '__main__':
     cli()
