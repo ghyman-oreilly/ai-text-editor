@@ -16,6 +16,7 @@ class TextBlock(basemodel):
 
 
 class TextFile(basemodel):
+	index: int # order of appearance in workflow
 	file_format: TextFileFormat
 	id: str
 	filepath: Path

@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import subprocess
+from typing import Union
 
 from models import TextFileFormat
 
@@ -53,3 +54,11 @@ def detect_format(path: Path) -> TextFileFormat:
         return "asciidoc"
     else:
         raise FileFormatError(f"Unsupported file format: {path.suffix.lower()}")
+
+
+def get_text_file_content(filepath: Union[str, Path]) -> str:
+    """
+    Return content of a text file.
+    """
+    with open(str(filepath), 'r', encoding='utf-8') as f:
+        return f.read()
