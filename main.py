@@ -5,10 +5,11 @@ import os
 from pathlib import Path
 import sys
 import time
-from typing import List, Optional
+from typing import List, Union
 
-from helpers import check_asciidoctor_installed, detect_format
-from models import AsciiFile, TextFileFormat
+from helpers import check_asciidoctor_installed
+from models import AsciiFile
+from read_files import read_files
 
 
 # config root logger
@@ -20,11 +21,10 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 
+SUPPORTED_FILE_EXT = [".adoc", ".asciidoc"]
 
-def read_json_file_list(
-        filepath: Path,
-        permitted_filetypes: list[str] = [".html", ".adoc", ".asciidoc"]
-        ) -> list[Path]:
+
+def read_json_file_list(filepath: Path) -> list[Path]:
     """
     Get list of files from a `file` list in a JSON file.
 
@@ -43,7 +43,7 @@ def read_json_file_list(
 
     for rel_path in json_data.get("files", []):
         abs_path = (project_dir / rel_path).resolve()
-        if abs_path.exists() and abs_path.is_file() and abs_path.suffix.lower() in permitted_filetypes:
+        if abs_path.exists() and abs_path.is_file() and abs_path.suffix.lower() in SUPPORTED_FILE_EXT:
             filepaths.append(abs_path)
 
     if not filepaths:
@@ -52,10 +52,7 @@ def read_json_file_list(
     return filepaths
 
 
-def resolve_input_paths(
-        inputs: list, 
-        permitted_filetypes: list[str] = [".adoc", ".asciidoc"]
-    ) -> list[Path]:
+def resolve_input_paths(inputs: list) -> list[Path]:
     """
     Takes in a list of input paths and resolves them into a list of Path objects.
     Supports:
@@ -81,16 +78,16 @@ def resolve_input_paths(
         # handle directory input
         if input_path.is_dir():
             resolved_files.extend(
-                f for f in input_path.glob("*") if f.exists() and f.is_file() and f.suffix.lower() in permitted_filetypes
+                f for f in input_path.glob("*") if f.exists() and f.is_file() and f.suffix.lower() in SUPPORTED_FILE_EXT
             )
 
         # handle filepaths input
         elif input_path.is_file():
-            if input_path.suffix.lower() in permitted_filetypes:
+            if input_path.suffix.lower() in SUPPORTED_FILE_EXT:
                 resolved_files.append(input_path)
             else:
                 raise ValueError(
-                    f"If passing a list of filepaths, all files must be of types: {', '.join(permitted_filetypes)}"
+                    f"If passing a list of filepaths, all files must be of types: {', '.join(SUPPORTED_FILE_EXT)}"
                     )
         
         else:
@@ -99,7 +96,7 @@ def resolve_input_paths(
     return resolved_files
 
 
-def sort_chapter_files_by_json_file_list(chapter_filepaths: list[Path], json_file_list_filepaths: list[Path] | None = None) -> list[Path]:
+def sort_chapter_files_by_json_file_list(chapter_filepaths: list[Path], json_file_list_filepaths: Union[list[Path], None] = None) -> list[Path]:
     """
     Sort chapter_filepaths according to relative paths in JSON file list.
     Files not in json_file_list_filepaths will come after, sorted alphabetically.
@@ -108,7 +105,7 @@ def sort_chapter_files_by_json_file_list(chapter_filepaths: list[Path], json_fil
 
     if not json_file_list_filepaths:
         # Sort alphabetically by filename (or full path)
-        return sorted(chapter_filepaths, key=lambda p: p.name.lower())  # or p.as_posix().lower()
+        return sorted(chapter_filepaths, key=lambda p: p.name.lower())
 
     # Create a lookup map from filename (or relative path) to order
     file_list_order = {Path(p).name: i for i, p in enumerate(json_file_list_filepaths)}
@@ -153,29 +150,19 @@ def cli(input_paths):
         click.echo("Exiting.")
         sys.exit(0)
 
-    # asciidoc notice and prep
+    # check for asciidoctor
     if any(f.name.lower().endswith(('.asciidoc', '.adoc')) for f in sorted_filepaths):
-        click.echo("Project contains asciidoc files. Please be patient as asciidoc files are converted to html in memory.")
-        click.echo("This will not convert your actual asciidoc files to html.")
         check_asciidoctor_installed()
-    else:
-        click.echo("\nProgress: Script is running. This may take up to several minutes to complete. Please wait...\n")
+
+    click.echo("\nProgress: Script is running. This may take up to several minutes to complete. Please wait...\n")
 
     files_to_skip = [] # for use with potential future HTML use case
 
-    all_text_files: Optional[List[AsciiFile]] = []
+    # collect text file data
+    click.echo("\nExtracting data from text files...\n")
+    all_text_files: List[AsciiFile] = read_files(sorted_filepaths)
 
-    # collect chapter data
-    for filepath in sorted_filepaths:
-        click.echo(f"Extracting text data from {filepath}...")
-        if all(skip_str not in filepath.name for skip_str in files_to_skip):
-            file_format: TextFileFormat = detect_format(filepath)
-            text_content = None
-            with open(filepath, 'r', encoding='utf-8') as f:
-                text_content = f.read()
-            if text_content and file_format == 'asciidoc':
-                all_text_files.append()
-
+    click.echo("Script complete.")
 
 
 if __name__ == '__main__':

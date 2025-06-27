@@ -1,12 +1,12 @@
 from pathlib import Path
-from pydantic import basemodel
+from pydantic import BaseModel
 from typing import List, Literal, Optional
 
 
 TextFileFormat = Literal["asciidoc"]
 
 
-class TextBlock(basemodel):
+class TextBlock(BaseModel):
 	index: int # order of appearance in file
 	file_id: str
 	block_id: str
@@ -15,7 +15,7 @@ class TextBlock(basemodel):
 	is_processed: bool = False
 
 
-class TextFile(basemodel):
+class TextFile(BaseModel):
 	index: int # order of appearance in workflow
 	file_format: TextFileFormat
 	id: str
@@ -36,11 +36,18 @@ class TextFile(basemodel):
 		"""
 		return '\n'.join([b.original_content for b in self.text_blocks])
 
-	@property
-	def ai_edited_content(self):
+	def get_edited_content(self):
 		"""
 		Get AI-edited content for the entire file, falling back to
-		original content if text block not yet edited
+		original content if text block not yet edited.
+
+		Making this a class method instead of a property, to help
+		prevent confusion in business logic prior to completing AI 
+		editing/review (i.e., we won't call the method until that
+		process is completed).
+
+		We fall back to original content if no ai_edited content,
+		because some text blocks may not receive edits.
 		"""
 		return '\n'.join([b.ai_edited_content or b.original_content for b in self.text_blocks])
 
