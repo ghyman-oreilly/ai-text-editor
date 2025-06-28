@@ -116,6 +116,22 @@ def sort_chapter_files_by_json_file_list(chapter_filepaths: list[Path], json_fil
 
     return sorted(chapter_filepaths, key=sort_key)
 
+def write_backup_to_json_file(input_data: list[AsciiFile], output_filepath: Union[str, Path]):
+    """ 
+    Serialize AsciiFile model data and save in JSON file.
+    """
+    with open(str(output_filepath), 'w') as f:
+        json.dump([i.model_dump(mode="json") for i in input_data], f)
+
+
+def read_backup_from_json_file(input_filepath: Union[str, Path]) -> List[AsciiFile]:
+    """ 
+    Read JSON file and and validate data as AsciiFile model data.
+    """
+    with open(str(input_filepath), 'r') as f:
+        file_data = json.load(f)
+        return [AsciiFile.model_validate(fd) for fd in file_data]
+    
 
 @click.command(help="""
 Provide one of the following:
@@ -125,7 +141,8 @@ Provide one of the following:
 """)
 @click.version_option(version='1.0.0')
 @click.argument("input_paths", nargs=-1)
-def cli(input_paths):
+@click.option("--load-data-from-json", "-l", default=None, help="Provide the path to an optional JSON file of data backed up from a previous session. Useful for continuing your progress after a session is interrupted, without having to send all data back to the AI service. NOTE: Do not use this option if you've made changes in the repo since the backup file was produced, as it may overwrite your changes.")
+def cli(input_paths, load_data_from_json=None):
     """Script for using AI to edit documents in alignment with an editorial stylesheet."""    
     chapter_filepaths = resolve_input_paths(input_paths)  
     project_dir = chapter_filepaths[0].parent
@@ -139,6 +156,13 @@ def cli(input_paths):
     if speculative_atlas_json_filepath.exists:
         atlas_filepaths = read_json_file_list(speculative_atlas_json_filepath)
 
+    # validate load file
+    if json_input_path := load_data_from_json:
+        json_input_path = Path(json_input_path)
+        if not json_input_path.is_file() or json_input_path.suffix.lower() != '.json':
+            click.echo(f"Path provided with --load-data-from-json option must point to a valid JSON file. Exiting.")
+            click.Abort()
+
     # sort by filelist or alpha
     sorted_filepaths = sort_chapter_files_by_json_file_list(chapter_filepaths, atlas_filepaths)
 
@@ -150,17 +174,26 @@ def cli(input_paths):
         click.echo("Exiting.")
         sys.exit(0)
 
-    # check for asciidoctor
-    if any(f.name.lower().endswith(('.asciidoc', '.adoc')) for f in sorted_filepaths):
-        check_asciidoctor_installed()
+    if json_input_path:
+        # load from JSON file
+        print("Loading repo data from JSON file...")
+        all_text_files: List[AsciiFile] = read_backup_from_json_file(json_input_path)
+    else:
+        # read repo files
+        if any(f.name.lower().endswith(('.asciidoc', '.adoc')) for f in sorted_filepaths):
+            # check for asciidoctor
+            check_asciidoctor_installed()
 
-    click.echo("\nProgress: Script is running. This may take up to several minutes to complete. Please wait...\n")
+        click.echo("\nProgress: Script is running. This may take up to several minutes to complete. Please wait...\n")
 
-    files_to_skip = [] # for use with potential future HTML use case
+        files_to_skip = [] # for use with potential future HTML use case
 
-    # collect text file data
-    click.echo("\nExtracting data from text files...\n")
-    all_text_files: List[AsciiFile] = read_files(sorted_filepaths)
+        # collect text file data
+        click.echo("\nExtracting data from text files...\n")
+        all_text_files: List[AsciiFile] = read_files(sorted_filepaths)
+
+        write_backup_to_json_file(all_text_files, backup_data_filepath)
+        click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")
 
     click.echo("Script complete.")
 
