@@ -5,8 +5,8 @@
 
 For style conventions, check our guide and word list first, then _The
 Chicago Manual of Style_, 18th edition, then
-_https://www.merriam-webster.com/[Merriam-Webster’s Collegiate
-Dictionary]_.
+https://www.merriam-webster.com/[Merriam-Webster’s Collegiate
+Dictionary].
 
 ==== URLs and Links
 
@@ -17,9 +17,7 @@ but when that’s not possible, use "preceding" or "following," as the
 physical placement of elements could be different in reflowable formats.
 
 * Anchor URLs to text nodes whenever possible, like you would on a
-website. See
-https://oreillymedia.github.io/production-resources/styleguide/#links[Links]
-for more information.
+website.
 
 * Avoid anchoring URLs to generic words or phrases such as "here," "this
 website," etc. Be as descriptive as possible.
@@ -27,8 +25,8 @@ website," etc. Be as descriptive as possible.
 For example, this:
 +
 ____
-Download the source code
-(http://www.url.thisismadeup.com/[_http://www.url.thisismadeup.com_])
+Download the 
+http://www.url.thisismadeup.com[source code]
 and install the package"
 ____
 +
@@ -36,7 +34,7 @@ is more useful than this:
 +
 ____
 "Download the source code from this website
-(http://www.url.thisismadeup.com/[_http://www.url.thisismadeup.com_])
+(http://www.url.thisismadeup.com)
 and install the package."
 ____
 
@@ -95,8 +93,7 @@ http://shop.oreilly.com/category/browse-subjects.do[catalog page].
 for the text the URL points to or context for where the link leads. For
 example:
 +
-. For more information, see the Wikipedia entry on JavaScript
-(https://en.wikipedia.org/wiki/JavaScript).
+. For more information, see the https://en.wikipedia.org/wiki/JavaScript[Wikipedia entry on JavaScript].
 . Grove, John. 2015. “Calhoun and Conservative Reform.” _American
 Political Thought_ 4, no. 2 (March): 203–27.
 https://doi.org/10.1086/680389.
