@@ -25,7 +25,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 
 SUPPORTED_FILE_EXT = [".adoc", ".asciidoc"]
-STYLE_GUIDE_TEXT = get_text_file_content('style_guides/orm_style_guide.txt')
+STYLE_GUIDE_TEXT = get_text_file_content('style_guides/orm_style_guide.asciidoc') # TODO: this should be configurable
 
 def read_json_file_list(filepath: Path) -> list[Path]:
     """
@@ -222,6 +222,7 @@ def cli(input_paths, load_data_from_json=None):
               	text_to_be_edited=text_block.original_content, 
                 preceding_passage_text=preceding_text_block, 
                 style_guide_text=STYLE_GUIDE_TEXT,
+                format_type='asciidoc'
             )
             prompt = ai_service_caller.create_prompt_object(prompt_text)
             edited_text = ai_service_caller.call_ai_service(prompt)
@@ -238,6 +239,7 @@ def cli(input_paths, load_data_from_json=None):
 
     # if all processed, save edited text to files
     if all(b.is_processed for f in all_text_files for b in f.text_blocks):
+        click.echo("Writing edited text to source files...")
         write_files(all_text_files)
 
     click.echo("Script complete.")
