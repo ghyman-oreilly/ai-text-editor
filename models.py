@@ -49,7 +49,7 @@ class TextFile(BaseModel):
 		We fall back to original content if no ai_edited content,
 		because some text blocks may not receive edits.
 		"""
-		return '\n'.join([b.ai_edited_content or b.original_content for b in self.text_blocks])
+		return '\n\n'.join([b.ai_edited_content or b.original_content for b in self.text_blocks])
 
 
 class AsciiBlock(TextBlock):

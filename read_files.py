@@ -149,7 +149,7 @@ def extract_ascii_blocks(
         buffer_tokens = 0
 
         for snippet in snippets:
-            snippet = snippet.strip()
+            snippet = snippet
             if not snippet:
                 continue
 
@@ -162,7 +162,7 @@ def extract_ascii_blocks(
                         index=block_index,
                         file_id=file_id,
                         block_id=str(uuid4()),
-                        original_content=buffer.strip()
+                        original_content=buffer
                     ))
                     block_index += 1
                     buffer = ""
@@ -183,7 +183,7 @@ def extract_ascii_blocks(
                     index=block_index,
                     file_id=file_id,
                     block_id=str(uuid4()),
-                    original_content=buffer.strip()
+                    original_content=buffer
                 ))
                 block_index += 1
                 buffer = snippet + "\n\n"
@@ -193,12 +193,12 @@ def extract_ascii_blocks(
                 buffer_tokens += snippet_tokens
 
         # Final flush per section
-        if buffer.strip():
+        if buffer:
             all_blocks.append(AsciiBlock(
                 index=block_index,
                 file_id=file_id,
                 block_id=str(uuid4()),
-                original_content=buffer.strip()
+                original_content=buffer
             ))
             block_index += 1
 
