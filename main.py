@@ -7,9 +7,12 @@ import sys
 import time
 from typing import List, Union
 
-from helpers import check_asciidoctor_installed
+from ai_service import AIServiceCaller
+from helpers import check_asciidoctor_installed, get_text_file_content
 from models import AsciiFile
+from prompts import generate_copyedit_prompt_text
 from read_files import read_files
+from write_files import write_files
 
 
 # config root logger
@@ -22,7 +25,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 
 SUPPORTED_FILE_EXT = [".adoc", ".asciidoc"]
-
+STYLE_GUIDE_TEXT = get_text_file_content('style_guides/orm_style_guide.txt')
 
 def read_json_file_list(filepath: Path) -> list[Path]:
     """
@@ -194,6 +197,48 @@ def cli(input_paths, load_data_from_json=None):
 
         write_backup_to_json_file(all_text_files, backup_data_filepath)
         click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")
+
+    ai_service_caller = AIServiceCaller()
+
+    click.echo("Sending text passages to AI service for copyediting...")
+
+    num_text_blocks = len([tb for f in all_text_files for tb in f.text_blocks])
+    block_counter = 0
+
+    # send text to AI service for block-level copyediting
+    for i, text_file in enumerate(all_text_files):
+        preceding_text_block = ""
+        for text_block in text_file.text_blocks:
+            block_counter += 1
+            base_msg = f"text passage {block_counter} of {num_text_blocks} passages (file {i+1} of {len(all_text_files)})"
+
+            if text_block.is_processed or text_block.ai_edited_content:
+                click.echo(f"Skipping {base_msg} (already edited)...")
+                continue
+
+            click.echo(f"Sending {base_msg} for editing...")
+            
+            prompt_text = generate_copyedit_prompt_text(
+              	text_to_be_edited=text_block.original_content, 
+                preceding_passage_text=preceding_text_block, 
+                style_guide_text=STYLE_GUIDE_TEXT,
+            )
+            prompt = ai_service_caller.create_prompt_object(prompt_text)
+            edited_text = ai_service_caller.call_ai_service(prompt)
+
+            if edited_text:
+                text_block.ai_edited_content = edited_text
+                text_block.is_processed = True
+
+            # set preceding block for next block
+            preceding_text_block = edited_text or text_block.original_content
+
+            write_backup_to_json_file(all_text_files, backup_data_filepath)
+            click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")
+
+    # if all processed, save edited text to files
+    if all(b.is_processed for f in all_text_files for b in f.text_blocks):
+        write_files(all_text_files)
 
     click.echo("Script complete.")
 

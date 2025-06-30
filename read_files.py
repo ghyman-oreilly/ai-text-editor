@@ -1,16 +1,11 @@
 from pathlib import Path
 import re
-import tiktoken
 from typing import List, Optional, Union
 from uuid import uuid4
 
-from helpers import detect_format, get_text_file_content
+from helpers import count_token_length, detect_format, get_text_file_content
 from models import AsciiBlock, AsciiFile, TextFileFormat
 
-
-def count_token_length(text: str, model: str = "gpt-4o") -> int:
-    enc = tiktoken.encoding_for_model(model)
-    return len(enc.encode(text))
 
 def is_attribute_line(line: str) -> bool:
     return (

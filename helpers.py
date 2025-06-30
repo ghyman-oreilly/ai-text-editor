@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import subprocess
+import tiktoken
 from typing import Union
 
 from models import TextFileFormat
@@ -62,3 +63,14 @@ def get_text_file_content(filepath: Union[str, Path]) -> str:
     """
     with open(str(filepath), 'r', encoding='utf-8') as f:
         return f.read()
+
+def write_text_to_file(filepath: Union[str, Path], text_content: str) -> str:
+    """
+    Write text to file.
+    """
+    with open(str(filepath), 'w', encoding='utf-8') as f:
+        f.write(text_content)
+
+def count_token_length(text: str, model: str = "gpt-4o") -> int:
+    enc = tiktoken.encoding_for_model(model)
+    return len(enc.encode(text))
