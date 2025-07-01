@@ -10,7 +10,7 @@ from typing import List, Union
 from ai_service import AIServiceCaller
 from helpers import check_asciidoctor_installed, get_text_file_content
 from models import AsciiFile
-from prompts import generate_copyedit_prompt_text
+from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, generate_prompt_text
 from read_files import read_files
 from write_files import write_files
 
@@ -212,24 +212,30 @@ def cli(input_paths, load_data_from_json=None):
             block_counter += 1
             base_msg = f"text passage {block_counter} of {num_text_blocks} passages (file {i+1} of {len(all_text_files)})"
 
-            if text_block.is_processed or text_block.ai_edited_content:
+            if text_block.is_edited or text_block.ai_edited_content:
                 click.echo(f"Skipping {base_msg} (already edited)...")
                 continue
 
             click.echo(f"Sending {base_msg} for editing...")
             
-            prompt_text = generate_copyedit_prompt_text(
-              	text_to_be_edited=text_block.original_content, 
-                preceding_passage_text=preceding_text_block, 
-                style_guide_text=STYLE_GUIDE_TEXT,
-                format_type='asciidoc'
+            prompt_text = generate_prompt_text(
+                prompt_template=COPYEDIT_PROMPT_BASE_TEXT,
+                model="gpt-4o",
+                max_tokens_per_prompt=20000,
+                template_kwargs={
+                    "style_guide": STYLE_GUIDE_TEXT,
+                    "preceding_passage": preceding_text_block,
+                    "format_type": 'asciidoc',
+                    "passage_to_be_edited": text_block.original_content,
+                }
             )
+
             prompt = ai_service_caller.create_prompt_object(prompt_text)
             edited_text = ai_service_caller.call_ai_service(prompt)
 
             if edited_text:
                 text_block.ai_edited_content = edited_text
-                text_block.is_processed = True
+                text_block.is_edited = True
 
             # set preceding block for next block
             preceding_text_block = edited_text or text_block.original_content
@@ -237,8 +243,51 @@ def cli(input_paths, load_data_from_json=None):
             write_backup_to_json_file(all_text_files, backup_data_filepath)
             click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")
 
-    # if all processed, save edited text to files
-    if all(b.is_processed for f in all_text_files for b in f.text_blocks):
+    click.echo("Sending edited text to AI service for QA...")
+
+    # if all edited, send original text and edited to AI service for QA
+    if all(b.is_edited for f in all_text_files for b in f.text_blocks):
+        block_counter = 0
+        no_issue_str = 'NO_ISSUE'
+        for i, text_file in enumerate(all_text_files):
+            for text_block in text_file.text_blocks:
+                block_counter += 1
+                base_msg = f"text passage {block_counter} of {num_text_blocks} passages (file {i+1} of {len(all_text_files)})"
+
+                if text_block.is_qaed:
+                    click.echo(f"Skipping {base_msg} (already QAed)...")
+                    continue
+
+                if text_block.original_content == text_block.ai_edited_content:
+                    click.echo(f"Skipping {base_msg} (no changes in edited text)...")
+                    continue
+
+                click.echo(f"Sending {base_msg} for QA...")
+                
+                prompt_text = generate_prompt_text(
+                    prompt_template=ASCII_QA_PROMPT_BASE_TEXT,
+                    model="gpt-4o",
+                    max_tokens_per_prompt=10000,
+                    template_kwargs={
+                        'no_issue_str': no_issue_str,
+                        'original_text': text_block.original_content,
+                        'edited_text': text_block.ai_edited_content
+                    }
+                )
+
+                prompt = ai_service_caller.create_prompt_object(prompt_text)
+                response = ai_service_caller.call_ai_service(prompt)
+
+                if response:
+                    if response.strip().lower() != no_issue_str.lower():
+                        text_block.ai_qaed_content = response
+                    text_block.is_qaed = True
+
+                write_backup_to_json_file(all_text_files, backup_data_filepath)
+                click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")     
+
+    # if all processed and QAed, save edited text to files
+    if all(b.is_edited and b.is_qaed for f in all_text_files for b in f.text_blocks):
         click.echo("Writing edited text to source files...")
         write_files(all_text_files)
 

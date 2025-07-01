@@ -12,7 +12,9 @@ class TextBlock(BaseModel):
 	block_id: str
 	original_content: str
 	ai_edited_content: str = ''
-	is_processed: bool = False
+	ai_qaed_content: str = ''
+	is_edited: bool = False
+	is_qaed: bool = False
 
 
 class TextFile(BaseModel):
@@ -27,7 +29,7 @@ class TextFile(BaseModel):
 		"""
 		Check whether all text blocks in file are processed
 		"""
-		return all([b.is_processed for b in self.text_blocks])
+		return all([b.is_edited for b in self.text_blocks])
 
 	@property
 	def original_content(self):
@@ -36,7 +38,7 @@ class TextFile(BaseModel):
 		"""
 		return '\n'.join([b.original_content for b in self.text_blocks])
 
-	def get_edited_content(self):
+	def get_qaed_edited_content(self):
 		"""
 		Get AI-edited content for the entire file, falling back to
 		original content if text block not yet edited.
@@ -46,10 +48,10 @@ class TextFile(BaseModel):
 		editing/review (i.e., we won't call the method until that
 		process is completed).
 
-		We fall back to original content if no ai_edited content,
+		We fall back to original content if no ai_qaed or ai_edited content,
 		because some text blocks may not receive edits.
 		"""
-		return '\n\n'.join([b.ai_edited_content or b.original_content for b in self.text_blocks])
+		return '\n\n'.join([b.ai_qaed_content or b.ai_edited_content or b.original_content for b in self.text_blocks])
 
 
 class AsciiBlock(TextBlock):

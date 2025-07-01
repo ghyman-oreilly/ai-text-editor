@@ -15,6 +15,6 @@ def write_files(text_files: List[AsciiFile]):
 	"""
 	for text_file in text_files:
 		filepath = text_file.filepath
-		edited_text = text_file.get_edited_content()
+		edited_text = text_file.get_qaed_edited_content()
 		write_text_to_file(filepath, edited_text)
 		logger.info(f"Edited text written to file: {filepath}")
