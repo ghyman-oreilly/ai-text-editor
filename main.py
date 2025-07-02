@@ -10,7 +10,7 @@ from typing import List, Union
 from ai_service import AIServiceCaller
 from helpers import check_asciidoctor_installed, get_text_file_content
 from models import AsciiFile
-from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, generate_prompt_text
+from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, generate_prompt_text, generate_style_guide_text
 from read_files import read_files
 from write_files import write_files
 
@@ -25,7 +25,6 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 
 SUPPORTED_FILE_EXT = [".adoc", ".asciidoc"]
-STYLE_GUIDE_TEXT = get_text_file_content('style_guides/orm_style_guide.asciidoc') # TODO: this should be configurable
 
 def read_json_file_list(filepath: Path) -> list[Path]:
     """
@@ -150,7 +149,11 @@ def cli(input_paths, load_data_from_json=None):
     chapter_filepaths = resolve_input_paths(input_paths)  
     project_dir = chapter_filepaths[0].parent
     cwd = Path(os.getcwd())
+    style_guide_dir = Path(cwd / 'style_guides')
     backup_data_filepath = Path(cwd / f"{'backup_' + str(int(time.time())) + '.json'}")
+    word_list_filepath = Path(style_guide_dir / 'wordlist.txt')
+    word_list_w_embeddings_filepath = Path(style_guide_dir / 'wordlist_w_embeddings.json')
+    style_rules_filepath = Path(style_guide_dir / 'orm_style_guide.asciidoc')
 
     # look for JSON filelist for sorting chapter files
     speculative_atlas_json_filepath = Path(project_dir / "atlas.json")
@@ -218,15 +221,25 @@ def cli(input_paths, load_data_from_json=None):
 
             click.echo(f"Sending {base_msg} for editing...")
             
+            original_content = text_block.original_content
+
+            style_guide_text = generate_style_guide_text(
+                text_passage=original_content,
+                word_list_filepath=word_list_filepath,
+                word_list_w_embeddings_filepath=word_list_w_embeddings_filepath,
+                style_rules_filepath=style_rules_filepath,
+                ai_service_caller=ai_service_caller,
+            )
+
             prompt_text = generate_prompt_text(
                 prompt_template=COPYEDIT_PROMPT_BASE_TEXT,
                 model="gpt-4o",
                 max_tokens_per_prompt=20000,
                 template_kwargs={
-                    "style_guide": STYLE_GUIDE_TEXT,
+                    "style_guide": style_guide_text,
                     "preceding_passage": preceding_text_block,
                     "format_type": 'asciidoc',
-                    "passage_to_be_edited": text_block.original_content,
+                    "passage_to_be_edited": original_content,
                 }
             )
 

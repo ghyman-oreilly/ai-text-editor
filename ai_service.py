@@ -111,3 +111,18 @@ class AIServiceCaller:
         except Exception as e:
             logger.error(f"Error calling AI service: {e}")
             return None
+
+    def generate_embedding(
+        self,
+        input_text: str,
+        embedding_model: str = "text-embedding-ada-002",
+    ):
+        """
+        Generate text embedding
+        """
+        try:
+            response = openai.embeddings.create(model=embedding_model, input=input_text)
+            return response.data[0].embedding
+        except Exception as e:
+            logger.error(f"Error calling AI service or parsing response: {e}")
+            return None

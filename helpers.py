@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 import subprocess
@@ -70,6 +71,14 @@ def write_text_to_file(filepath: Union[str, Path], text_content: str) -> str:
     """
     with open(str(filepath), 'w', encoding='utf-8') as f:
         f.write(text_content)
+
+def write_json_to_file(filepath: Union[str, Path], data):
+    with open(str(filepath), "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+def get_json_file_content(filepath: Union[str, Path]):
+    with open(str(filepath), "r", encoding="utf-8") as f:
+        return json.load(f)
 
 def count_token_length(text: str, model: str = "gpt-4o") -> int:
     enc = tiktoken.encoding_for_model(model)
