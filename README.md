@@ -19,6 +19,10 @@ A script for using AI to edit documents in alignment with an editorial styleshee
 
 * Test whether performance/accuracy is better (following of instructions, adherence to guide, etc.) if we stick with the top X most impactful style rules (plus wordlist RAG)
 
+* Split style guides into local and global lists
+
+* Add global review pass (no text edits: informational only: figs missing a reference, repeated acronym definitions, etc. etc.)
+
 * Some post-processing of responses:
   * Check for ``` ``` enclosing response, where not present in original
   * Check for language tag where not in the original
