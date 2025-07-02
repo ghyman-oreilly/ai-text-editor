@@ -1,11 +1,12 @@
 import hashlib
 import logging
 import math
+import numpy as np
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from ai_service import AIServiceCaller
-from helpers import count_token_length, get_text_file_content, get_json_file_content, write_json_to_file
+from helpers import count_token_length, get_text_file_content
 
 
 class MaxTokensExceeded(Exception):
@@ -115,7 +116,8 @@ def compute_hash(text: str) -> str:
 
 def generate_embeddings_dict_from_list(
         input_text_list: List[str],
-        ai_service_caller: AIServiceCaller
+        ai_service_caller: AIServiceCaller,
+        embedding_model: str
     ) -> List[Dict[str, Any]]:
     """
     For a list of text strings, generate a list of dictionaries:
@@ -126,11 +128,12 @@ def generate_embeddings_dict_from_list(
     results = []
     for i, input_text in enumerate(input_text_list):
         logger.info(f"Generating embedding for {i+1} of {len(input_text_list)} word list items...")
-        embedding = ai_service_caller.generate_embedding(input_text=input_text)
+        embedding = ai_service_caller.generate_st_embedding(input_text=input_text)
         result = {
             "term": input_text,
             "embedding": embedding,
-            "text_hash": compute_hash(input_text)
+            "text_hash": compute_hash(input_text),
+            "model": embedding_model
         }
         results.append(result)
     return results
@@ -139,7 +142,8 @@ def generate_embeddings_dict_from_list(
 def check_and_update_wordlist_embeddings(
         word_list_filepath: Union[Path, str],
         word_list_w_embeddings_filepath: Union[Path, str],
-        ai_service_caller: AIServiceCaller,    
+        ai_service_caller: AIServiceCaller,
+        embedding_model: str    
     ):
     """
     Check for persisted wordlist embeddings. Load or create
@@ -163,20 +167,22 @@ def check_and_update_wordlist_embeddings(
     word_list_text = get_text_file_content(word_list_filepath)
     word_list = word_list_text.split('\n')
 
+    # TODO: lots of repetition in this function; let's abstract
+
     if not word_list_w_embeddings_filepath.exists():
         logger.info("No cached word list embeddings found. Generating new embeddings. Please be patient...")
-        embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller)
-        write_json_to_file(word_list_w_embeddings_filepath, embeddings_dict)
+        embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
+        write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
         return embeddings_dict
 
     try:
-        cached_embeddings_dict = get_json_file_content(word_list_w_embeddings_filepath)
+        cached_embeddings_dict = read_npz_embeddings(word_list_w_embeddings_filepath)
 
         # check count
         if len(word_list) != len(cached_embeddings_dict):
             logger.info("Word list change detected (count mismatch). Regenerating embeddings. Please be patient...")
-            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller)
-            write_json_to_file(word_list_w_embeddings_filepath, embeddings_dict)
+            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
+            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
             return embeddings_dict
 
         # check hashes
@@ -185,17 +191,58 @@ def check_and_update_wordlist_embeddings(
 
         if current_hashes != cached_hashes:
             logger.info("Word list change detected (content mismatches). Regenerating embeddings. Please be patient...")
-            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller)
-            write_json_to_file(word_list_w_embeddings_filepath, embeddings_dict)
+            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
+            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
+            return embeddings_dict
+        
+        # check for embedding model mismatch
+        if any(e['model'] != embedding_model for e in cached_embeddings_dict):
+            logger.info("Embedding model mismatch. Regenerating embeddings. Please be patient...")
+            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
+            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
+            return embeddings_dict
+
+        # check for null embeddings (e.g., previous session failed)
+        if any(not e['embedding'] for e in cached_embeddings_dict):
+            logger.info("Null embedding field in word list. Regenerating embeddings. Please be patient...")
+            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
+            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
             return embeddings_dict
 
         return cached_embeddings_dict
 
     except Exception as e:
         logger.warning("Failed to validate or parse cached embeddings. Rebuilding. Please be patient...")
-        embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller)
-        write_json_to_file(word_list_w_embeddings_filepath, embeddings_dict)
+        embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
+        write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
         return embeddings_dict
+
+
+def write_npz_embeddings(filepath: Union[str, Path], items: List[Dict[str, Any]]) -> None:
+    terms = np.array([item["term"] for item in items], dtype=object)
+    embeddings = np.array([item["embedding"] for item in items], dtype=np.float32)
+    hashes = np.array([item["text_hash"] for item in items], dtype=object)
+    models = np.array([item["model"] for item in items], dtype=object)
+
+    np.savez_compressed(filepath, terms=terms, embeddings=embeddings, hashes=hashes, models=models)
+
+
+def read_npz_embeddings(filepath: Union[str, Path]) -> List[Dict[str, Any]]:
+    data = np.load(filepath, allow_pickle=True)
+    terms = data["terms"]
+    embeddings = data["embeddings"]
+    hashes = data["hashes"]
+    models = data["models"]
+
+    return [
+        {
+            "term": term,
+            "embedding": embedding.tolist(),
+            "text_hash": hash_val,
+            "model": model
+        }
+        for term, embedding, hash_val, model in zip(terms, embeddings, hashes, models)
+    ]
 
 
 def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
@@ -225,7 +272,7 @@ def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
 def get_relevant_word_list_terms(
     word_list_embeddings: List[Dict[str, any]],
     text_passage_embedding: List[float],
-    similarity_threshold: float = 0.70
+    similarity_threshold: float = 0.60
 ) -> List[str]:
     """
     Return terms from word list where embedding cosine similarity to text_passage_embedding
@@ -245,6 +292,8 @@ def generate_style_guide_text(
     word_list_w_embeddings_filepath: Union[Path, str],
     style_rules_filepath: Union[Path, str],
     ai_service_caller: AIServiceCaller,
+    embedding_model: str,
+    word_list_w_embeddings: Optional[List[Dict[str, Any]]] = None
     ):
     """
     Use embeddings of existing style rules, word list, and text passage
@@ -260,10 +309,11 @@ def generate_style_guide_text(
     Return:
         string representing style guide portion of prompt
     """
-    word_list_w_embeddings = check_and_update_wordlist_embeddings(word_list_filepath, word_list_w_embeddings_filepath, ai_service_caller)
-    text_passage_embedding = ai_service_caller.generate_embedding(input_text=text_passage)
+    if not word_list_w_embeddings:
+        word_list_w_embeddings = check_and_update_wordlist_embeddings(word_list_filepath, word_list_w_embeddings_filepath, ai_service_caller, embedding_model)
+    text_passage_embedding = ai_service_caller.generate_st_embedding(input_text=text_passage)
     relevant_word_list_terms = get_relevant_word_list_terms(word_list_w_embeddings, text_passage_embedding)
     style_rules_str = get_text_file_content(style_rules_filepath)
     word_list_str = '=== Word List' + '\n' + '\n'.join(relevant_word_list_terms) if relevant_word_list_terms else ''
-    style_guide_text_for_prompt = style_rules_str + word_list_str
+    style_guide_text_for_prompt = style_rules_str + '\n' + word_list_str
     return style_guide_text_for_prompt

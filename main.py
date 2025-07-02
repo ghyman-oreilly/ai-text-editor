@@ -10,7 +10,7 @@ from typing import List, Union
 from ai_service import AIServiceCaller
 from helpers import check_asciidoctor_installed, get_text_file_content
 from models import AsciiFile
-from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, generate_prompt_text, generate_style_guide_text
+from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, check_and_update_wordlist_embeddings, generate_prompt_text, generate_style_guide_text
 from read_files import read_files
 from write_files import write_files
 
@@ -144,7 +144,8 @@ Provide one of the following:
 @click.version_option(version='1.0.0')
 @click.argument("input_paths", nargs=-1)
 @click.option("--load-data-from-json", "-l", default=None, help="Provide the path to an optional JSON file of data backed up from a previous session. Useful for continuing your progress after a session is interrupted, without having to send all data back to the AI service. NOTE: Do not use this option if you've made changes in the repo since the backup file was produced, as it may overwrite your changes.")
-def cli(input_paths, load_data_from_json=None):
+@click.option("--disable-qa-pass", "-q", is_flag=True, help="Disable QA pass of AI service calls designed to clean up any formatting errors introduced by the model. Model tends sporadically to convert some AsciiDoc formatting to Markdown during editing pass, likely due to large and complex prompting.")
+def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
     """Script for using AI to edit documents in alignment with an editorial stylesheet."""    
     chapter_filepaths = resolve_input_paths(input_paths)  
     project_dir = chapter_filepaths[0].parent
@@ -152,8 +153,10 @@ def cli(input_paths, load_data_from_json=None):
     style_guide_dir = Path(cwd / 'style_guides')
     backup_data_filepath = Path(cwd / f"{'backup_' + str(int(time.time())) + '.json'}")
     word_list_filepath = Path(style_guide_dir / 'wordlist.txt')
-    word_list_w_embeddings_filepath = Path(style_guide_dir / 'wordlist_w_embeddings.json')
+    word_list_w_embeddings_filepath = Path(style_guide_dir / 'wordlist_w_embeddings.npz')
     style_rules_filepath = Path(style_guide_dir / 'orm_style_guide.asciidoc')
+
+    embedding_model = 'BAAI/bge-small-en-v1.5'
 
     # look for JSON filelist for sorting chapter files
     speculative_atlas_json_filepath = Path(project_dir / "atlas.json")
@@ -201,7 +204,11 @@ def cli(input_paths, load_data_from_json=None):
         write_backup_to_json_file(all_text_files, backup_data_filepath)
         click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")
 
-    ai_service_caller = AIServiceCaller()
+    ai_service_caller = AIServiceCaller(st_embedding_model=embedding_model)
+
+    click.echo("Loading word list embeddings...")
+
+    word_list_w_embeddings = check_and_update_wordlist_embeddings(word_list_filepath, word_list_w_embeddings_filepath, ai_service_caller, embedding_model)
 
     click.echo("Sending text passages to AI service for copyediting...")
 
@@ -229,6 +236,8 @@ def cli(input_paths, load_data_from_json=None):
                 word_list_w_embeddings_filepath=word_list_w_embeddings_filepath,
                 style_rules_filepath=style_rules_filepath,
                 ai_service_caller=ai_service_caller,
+                embedding_model=embedding_model,
+                word_list_w_embeddings=(word_list_w_embeddings if word_list_w_embeddings else None)
             )
 
             prompt_text = generate_prompt_text(
@@ -259,7 +268,10 @@ def cli(input_paths, load_data_from_json=None):
     click.echo("Sending edited text to AI service for QA...")
 
     # if all edited, send original text and edited to AI service for QA
-    if all(b.is_edited for f in all_text_files for b in f.text_blocks):
+    if (
+        all(b.is_edited for f in all_text_files for b in f.text_blocks)
+        and not disable_qa_pass
+    ):
         block_counter = 0
         no_issue_str = 'NO_ISSUE'
         for i, text_file in enumerate(all_text_files):
@@ -300,7 +312,7 @@ def cli(input_paths, load_data_from_json=None):
                 click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")     
 
     # if all processed and QAed, save edited text to files
-    if all(b.is_edited and b.is_qaed for f in all_text_files for b in f.text_blocks):
+    if all(b.is_edited and (disable_qa_pass or b.is_qaed) for f in all_text_files for b in f.text_blocks):
         click.echo("Writing edited text to source files...")
         write_files(all_text_files)
 

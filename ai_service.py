@@ -3,6 +3,7 @@ import logging
 from pydantic import BaseModel
 import openai
 import os
+from sentence_transformers import SentenceTransformer
 import time
 from typing import Optional, List, Dict, Union, Literal
 
@@ -51,8 +52,15 @@ class Prompt(BaseModel):
 
 
 class AIServiceCaller:
-    def __init__(self, model="gpt-4o"):
-        self.model = model
+    def __init__(
+            self, 
+            responses_model="gpt-4o",
+            openai_embedding_model='text-embedding-3-small',
+            st_embedding_model='BAAI/bge-small-en-v1.5'
+            ):
+        self.responses_model = responses_model
+        self.openai_embedding_model = openai_embedding_model
+        self.st_embedding_model = SentenceTransformer(st_embedding_model)
 
     def create_prompt_object(
             self, 
@@ -101,7 +109,7 @@ class AIServiceCaller:
         """
         try:
             response = client.responses.create(
-                model=self.model,
+                model=self.responses_model,
                 input=prompt.as_messages()
             )
             
@@ -112,17 +120,31 @@ class AIServiceCaller:
             logger.error(f"Error calling AI service: {e}")
             return None
 
-    def generate_embedding(
+    def generate_openai_embedding(
         self,
         input_text: str,
-        embedding_model: str = "text-embedding-ada-002",
     ):
         """
         Generate text embedding
         """
         try:
-            response = openai.embeddings.create(model=embedding_model, input=input_text)
+            response = openai.embeddings.create(model=self.openai_embedding_model, input=input_text)
             return response.data[0].embedding
         except Exception as e:
             logger.error(f"Error calling AI service or parsing response: {e}")
+            return None
+
+    def generate_st_embedding(
+        self,
+        input_text: str,
+        normalize_embeddings: bool = True
+    ):
+        """
+        Generate text embedding
+        """
+        try:
+            embedding = self.st_embedding_model.encode(input_text, normalize_embeddings=normalize_embeddings)
+            return embedding
+        except Exception as e:
+            logger.error(f"Error generating embedding: {e}")
             return None
