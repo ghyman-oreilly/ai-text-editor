@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 from pathlib import Path
@@ -83,3 +84,6 @@ def get_json_file_content(filepath: Union[str, Path]):
 def count_token_length(text: str, model: str = "gpt-4o") -> int:
     enc = tiktoken.encoding_for_model(model)
     return len(enc.encode(text))
+
+def compute_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()

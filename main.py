@@ -8,9 +8,9 @@ import time
 from typing import List, Union
 
 from ai_service import AIServiceCaller
-from helpers import check_asciidoctor_installed, get_text_file_content
-from models import AsciiFile
-from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, check_and_update_wordlist_embeddings, generate_prompt_text, generate_style_guide_text
+from helpers import check_asciidoctor_installed, get_text_file_content, get_json_file_content
+from models import AsciiFile, load_style_guide
+from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, check_and_update_embedding_items, generate_prompt_text, generate_style_guide_text
 from read_files import read_files
 from write_files import write_files
 
@@ -154,7 +154,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
     backup_data_filepath = Path(cwd / f"{'backup_' + str(int(time.time())) + '.json'}")
     word_list_filepath = Path(style_guide_dir / 'wordlist.txt')
     word_list_w_embeddings_filepath = Path(style_guide_dir / 'wordlist_w_embeddings.npz')
-    style_rules_filepath = Path(style_guide_dir / 'orm_style_guide.asciidoc')
+    local_style_rules_filepath = Path(style_guide_dir / 'style_guide_local.json')
+    local_style_rules_w_embeddings_filepath = Path(style_guide_dir / 'style_local_w_embeddings.npz')
 
     embedding_model = 'BAAI/bge-small-en-v1.5'
 
@@ -208,7 +209,15 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
 
     click.echo("Loading word list embeddings...")
 
-    word_list_w_embeddings = check_and_update_wordlist_embeddings(word_list_filepath, word_list_w_embeddings_filepath, ai_service_caller, embedding_model)
+    word_list = get_text_file_content(word_list_filepath).split('\n')
+
+    style_guide = load_style_guide(local_style_rules_filepath, "local")
+
+    word_list_embeddings = check_and_update_embedding_items(word_list, word_list_w_embeddings_filepath, embedding_model, ai_service_caller.generate_st_embedding)
+
+    local_styles_list = [r["content"] for i in get_json_file_content(local_style_rules_filepath) for r in i["rules"]]
+
+    local_style_embeddings = check_and_update_embedding_items(local_styles_list, local_style_rules_w_embeddings_filepath, embedding_model, ai_service_caller.generate_st_embedding)
 
     click.echo("Sending text passages to AI service for copyediting...")
 
@@ -230,14 +239,14 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
             
             original_content = text_block.original_content
 
+            deterministically_matched_style_rules = style_guide.get_matching_rule_contents(original_content, 'asciidoc')
+
             style_guide_text = generate_style_guide_text(
                 text_passage=original_content,
-                word_list_filepath=word_list_filepath,
-                word_list_w_embeddings_filepath=word_list_w_embeddings_filepath,
-                style_rules_filepath=style_rules_filepath,
-                ai_service_caller=ai_service_caller,
-                embedding_model=embedding_model,
-                word_list_w_embeddings=(word_list_w_embeddings if word_list_w_embeddings else None)
+                word_list_embeddings=(word_list_embeddings if word_list_embeddings else None),
+                local_style_rules_embeddings=(local_style_embeddings if local_style_embeddings else None),
+                embed_function=ai_service_caller.generate_st_embedding,
+                other_style_rules_to_inject=(deterministically_matched_style_rules if deterministically_matched_style_rules else None)
             )
 
             prompt_text = generate_prompt_text(

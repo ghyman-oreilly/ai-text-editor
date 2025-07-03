@@ -3,10 +3,11 @@ import logging
 import math
 import numpy as np
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ai_service import AIServiceCaller
+from embeddings import filter_by_vector_similarity
 from helpers import count_token_length, get_text_file_content
+from models import Embedding
 
 
 class MaxTokensExceeded(Exception):
@@ -110,210 +111,26 @@ def generate_prompt_text(
     return prompt_text
 
 
-def compute_hash(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def generate_embeddings_dict_from_list(
-        input_text_list: List[str],
-        ai_service_caller: AIServiceCaller,
-        embedding_model: str
-    ) -> List[Dict[str, Any]]:
-    """
-    For a list of text strings, generate a list of dictionaries:
-        "term": the string
-        "embedding: the embedding
-        "text_hash": hash for checking content changes
-    """
-    results = []
-    for i, input_text in enumerate(input_text_list):
-        logger.info(f"Generating embedding for {i+1} of {len(input_text_list)} word list items...")
-        embedding = ai_service_caller.generate_st_embedding(input_text=input_text)
-        result = {
-            "term": input_text,
-            "embedding": embedding,
-            "text_hash": compute_hash(input_text),
-            "model": embedding_model
-        }
-        results.append(result)
-    return results
-
-
-def check_and_update_wordlist_embeddings(
-        word_list_filepath: Union[Path, str],
-        word_list_w_embeddings_filepath: Union[Path, str],
-        ai_service_caller: AIServiceCaller,
-        embedding_model: str    
-    ):
-    """
-    Check for persisted wordlist embeddings. Load or create
-    new if not available or changed. 
-
-    Return list of dicts:
-        "term": wordlist item (string),
-        "embedding": embedding,
-        "text_hash": hash for checking content changes
-    """
-    word_list_filepath = Path(word_list_filepath)
-    word_list_w_embeddings_filepath = Path(word_list_w_embeddings_filepath)
-
-    if (
-        not word_list_filepath.exists 
-        or not word_list_filepath.is_file
-        or not word_list_filepath.suffix.lower() == '.txt'
-        ):
-        raise ValueError(f"`word_list_filepath` must be a valid .txt file")
-    
-    word_list_text = get_text_file_content(word_list_filepath)
-    word_list = word_list_text.split('\n')
-
-    # TODO: lots of repetition in this function; let's abstract
-
-    if not word_list_w_embeddings_filepath.exists():
-        logger.info("No cached word list embeddings found. Generating new embeddings. Please be patient...")
-        embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
-        write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
-        return embeddings_dict
-
-    try:
-        cached_embeddings_dict = read_npz_embeddings(word_list_w_embeddings_filepath)
-
-        # check count
-        if len(word_list) != len(cached_embeddings_dict):
-            logger.info("Word list change detected (count mismatch). Regenerating embeddings. Please be patient...")
-            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
-            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
-            return embeddings_dict
-
-        # check hashes
-        current_hashes = [compute_hash(i) for i in word_list]
-        cached_hashes = [item.get("text_hash") for item in cached_embeddings_dict]
-
-        if current_hashes != cached_hashes:
-            logger.info("Word list change detected (content mismatches). Regenerating embeddings. Please be patient...")
-            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
-            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
-            return embeddings_dict
-        
-        # check for embedding model mismatch
-        if any(e['model'] != embedding_model for e in cached_embeddings_dict):
-            logger.info("Embedding model mismatch. Regenerating embeddings. Please be patient...")
-            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
-            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
-            return embeddings_dict
-
-        # check for null embeddings (e.g., previous session failed)
-        if any(not e['embedding'] for e in cached_embeddings_dict):
-            logger.info("Null embedding field in word list. Regenerating embeddings. Please be patient...")
-            embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
-            write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
-            return embeddings_dict
-
-        return cached_embeddings_dict
-
-    except Exception as e:
-        logger.warning("Failed to validate or parse cached embeddings. Rebuilding. Please be patient...")
-        embeddings_dict = generate_embeddings_dict_from_list(word_list, ai_service_caller, embedding_model)
-        write_npz_embeddings(word_list_w_embeddings_filepath, embeddings_dict)
-        return embeddings_dict
-
-
-def write_npz_embeddings(filepath: Union[str, Path], items: List[Dict[str, Any]]) -> None:
-    terms = np.array([item["term"] for item in items], dtype=object)
-    embeddings = np.array([item["embedding"] for item in items], dtype=np.float32)
-    hashes = np.array([item["text_hash"] for item in items], dtype=object)
-    models = np.array([item["model"] for item in items], dtype=object)
-
-    np.savez_compressed(filepath, terms=terms, embeddings=embeddings, hashes=hashes, models=models)
-
-
-def read_npz_embeddings(filepath: Union[str, Path]) -> List[Dict[str, Any]]:
-    data = np.load(filepath, allow_pickle=True)
-    terms = data["terms"]
-    embeddings = data["embeddings"]
-    hashes = data["hashes"]
-    models = data["models"]
-
-    return [
-        {
-            "term": term,
-            "embedding": embedding.tolist(),
-            "text_hash": hash_val,
-            "model": model
-        }
-        for term, embedding, hash_val, model in zip(terms, embeddings, hashes, models)
-    ]
-
-
-def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
-    """
-    Compute cosine similarity between two vectors using pure Python.
-
-    Args:
-        vec1: First vector (list of floats).
-        vec2: Second vector (list of floats).
-
-    Returns:
-        Cosine similarity as a float between -1.0 and 1.0.
-    """
-    if len(vec1) != len(vec2):
-        raise ValueError("Vectors must be of same length")
-
-    dot_prod = sum(a * b for a, b in zip(vec1, vec2))
-    norm1 = math.sqrt(sum(a * a for a in vec1))
-    norm2 = math.sqrt(sum(b * b for b in vec2))
-
-    if norm1 == 0.0 or norm2 == 0.0:
-        return 0.0  # Define similarity with zero magnitude vector as 0
-
-    return dot_prod / (norm1 * norm2)
-
-
-def get_relevant_word_list_terms(
-    word_list_embeddings: List[Dict[str, any]],
-    text_passage_embedding: List[float],
-    similarity_threshold: float = 0.60
-) -> List[str]:
-    """
-    Return terms from word list where embedding cosine similarity to text_passage_embedding
-    is greater than or equal to similarity_threshold.
-    """
-    matching_terms = []
-    for item in word_list_embeddings:
-        similarity = cosine_similarity(item["embedding"], text_passage_embedding)
-        if similarity >= similarity_threshold:
-            matching_terms.append(item["term"])
-    return matching_terms
-
-
 def generate_style_guide_text(
     text_passage: str,
-    word_list_filepath: Union[Path, str],
-    word_list_w_embeddings_filepath: Union[Path, str],
-    style_rules_filepath: Union[Path, str],
-    ai_service_caller: AIServiceCaller,
-    embedding_model: str,
-    word_list_w_embeddings: Optional[List[Dict[str, Any]]] = None
+    word_list_embeddings: List[Embedding],
+    local_style_rules_embeddings: List[Embedding],
+    embed_function: Callable,
+    other_style_rules_to_inject: Union[List[str], List] = []
     ):
     """
     Use embeddings of existing style rules, word list, and text passage
     to generate style guide text. 
 
-    Args:
-        text_passage: text in prompt to be edited by AI service
-        word_list_filepath: filepath to newline delimited word list text file
-        word_list_w_embeddings_filepath: file path to JSON file with word list and embeddings
-        style_rules_filepath: file path to text file containing other style rules
-        ai_service_caller: instance of AIServiceCaller, for creating embeddings
-
     Return:
         string representing style guide portion of prompt
     """
-    if not word_list_w_embeddings:
-        word_list_w_embeddings = check_and_update_wordlist_embeddings(word_list_filepath, word_list_w_embeddings_filepath, ai_service_caller, embedding_model)
-    text_passage_embedding = ai_service_caller.generate_st_embedding(input_text=text_passage)
-    relevant_word_list_terms = get_relevant_word_list_terms(word_list_w_embeddings, text_passage_embedding)
-    style_rules_str = get_text_file_content(style_rules_filepath)
+    text_passage_embedding = embed_function(text_passage)
+    relevant_word_list_terms = [i.content for i in filter_by_vector_similarity(word_list_embeddings, text_passage_embedding)]
+    relevant_style_rules = [i.content for i in filter_by_vector_similarity(local_style_rules_embeddings, text_passage_embedding)]
+    if other_style_rules_to_inject:
+         relevant_style_rules = list(set(relevant_style_rules) | set(other_style_rules_to_inject))
+    style_rules_str = '=== Style Rules' + '\n' + '\n'.join(relevant_style_rules) if relevant_style_rules else ''
     word_list_str = '=== Word List' + '\n' + '\n'.join(relevant_word_list_terms) if relevant_word_list_terms else ''
     style_guide_text_for_prompt = style_rules_str + '\n' + word_list_str
     return style_guide_text_for_prompt
