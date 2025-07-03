@@ -1,0 +1,722 @@
+[
+	{
+		"category": "Headings",
+		"rules": [
+			{
+				"content": "Use title case for level A and B headings (represented by === and ==== in AsciiDoc format).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^=== |^==== "]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use sentence case for level C and D headings (represented by ===== and ====== in AsciiDoc format).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^===== |^======= "]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use title case for sidebar headings/captions.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^.\\w.*?\\n\\*{,4}"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use title case for admonition headings (e.g., Notes, Warnings, Tips).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^\\[(?:NOTE|TIP|WARNING)\\]\\n\\.\\w"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Code font, italic font, and bold font are not permitted in headings.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^={1,6}.*?[`+'\\*_]", "^.\\w.*?[`+'\\*_].*?\\n\\*{,4}"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "The casing of proper nouns and elements of code should not be changed to fit with the surrounding heading.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^={1,6} ", "^\\.\\w"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Prepositions of four letters or fewer are not initial-capped, unless they function as part of a verb (e.g., “Set Up Your Operating System”).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^={1,6} "]
+					}
+				],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Captions",
+		"rules": [
+			{
+				"content": "Use sentence case for image, table, and example captions/titles.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^\\.\\w"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Image, table, and example captions/titles do not end in a period unless they contain more than one complete sentence.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^\\.\\w"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Code font is permitted in image, table, and example captions/titles.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^\\.\\w"]
+					}
+				],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "URLs and Links",
+		"rules": [
+			{
+				"content": "Avoid using \"above\" and \"below\" to reference figures, tables, examples, unnumbered code blocks, equations, etc. (e.g., \"In the example below…\"). Using live cross references with the element ID (e.g., \"see <<figure-21>>\") is best, but when that’s not possible, use \"preceding\" or \"following,\" as the physical placement of elements could be different in reflowable formats.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[Aa]bove", "[Bb]elow", "[Ff]igure\b", "[Tt]able\b", "[Ee]xample", "[Ll]isting\b"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Anchor URLs to text nodes whenever possible, like you would on a website.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["http:"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Avoid anchoring URLs to generic words or phrases such as \"here,\" \"this website,\" etc. Be as descriptive as possible.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["http:"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Do not link to products on any sales channels other than oreilly.com, including Apple, Google, or Amazon. Apple and Google will refuse to sell content that links to products on Amazon. However, saying \"XX book is available on Amazon\"—sans link—is OK.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[Aa]mazon", "[Aa]pple", "[Gg]oogle"]
+					}
+				],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Abbreviations and Acronyms",
+		"rules": [
+			{
+				"content": "In units of measure, do not use a hyphen. For example, it’s 32 MB hard drive, not 32-MB hard drive. (Though when the unit is spelled out, use a hyphen, e.g., 32-megabyte hard drive.)",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d-\\w"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "K = 1,024; k = 1,000. So a 56 kbps modem is equal to 56,000 bps, while 64 K of memory is equal to 65,536.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d[- ]?[kK]"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Many acronyms are common enough that they should be used without expanding. For our books, that typically includes (but is not limited to) AI when it stands for artificial intelligence, API (application programming interface), CLI (command-line interface), CPU (central processing unit), HTML (HyperText Markup Language), IP (Internet Protocol), UI (user interface), UX (user experience), etc.",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Bibliographical Entries and Citations",
+		"rules": [
+			{
+				"content": "When citing materials in bibliographies, reference lists, or footnotes, use the “Notes and Bibliography” system from The Chicago Manual of Style, 18th edition. Chicago also has an Author-Date system that some authors prefer, which is perfectly acceptable. If there is no discernible consistency, use Chicago's Notes for footnotes and Bibliography for endnotes or back matter.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["footnote:"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "In general, when referring to another book within a book’s text, include the author name(s) for up to two authors. For three or more authors, state the first author name, followed by “et al.”",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			},
+			{
+				"content": "When referencing an O’Reilly book within the text, note only \"O’Reilly\" in parentheses, not \"O’Reilly Media, Inc.\" References to other O’Reilly books should be linked to the book’s http://shop.oreilly.com/category/browse-subjects.do[catalog page].",
+				"scope": "local",
+				"insertion_conditions": [					
+					{
+						"format": "asciidoc",
+						"patterns": ["O’Reilly", "O'Reilly"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Footnotes should contain more than just a URL, whether a full citation for the text the URL points to or context for where the link leads.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["footnote:"]
+					}
+				],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Dates and Numbers",
+		"rules": [
+			{
+				"content": "Always use the symbol % with numerals rather than the spelled out word (percent), and make sure it is closed up to number: 0.05%. Unless the percentage begins a sentence or title/caption, the number should be a numeral with the % symbol.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["%", "percent"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Spell out numbers from zero to nine and certain round multiples of those numbers unless the same object appears in a sentence with an object 10 or over (five apples; five apples and one hundred oranges; 5 apples and 110 oranges).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d", "(?:[Zz]ero|\b[Oo]ne|[Tt]wo|[Tt]hree|[Ff]our|[Ff]ive|[Ss]ix|[Ss]even|[Ee]ight|[Nn]ine|[Tt]en|[Ee]leven|[Tt]welve|[Tt]hir(?:teen|ty)|[Ff]if(?:teen|ty)|[Tt]wenty|[Ff]orty|[Hh]undred|[Tt]housand|[MmBbTt][Rr]?illion)"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Spell out ordinal numbers first through ninth, use numerals for 10th and above. No superscript.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d(?:th|st|rst|rd|nth)", "\b([Ff]irst|[Ss]econd|[Tt]hird|(?:[A-Za-z]+teenth)|(?:[A-Za-z]+tieth)|(?:[A-Za-z]+thousandth)|hundredth)\b"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Centuries follow the same zero through nine rule, so those will usually be numerals (i.e., 20th century, 21st century).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[Cc]entury"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "In most numbers of one thousand or more, commas should be used between groups of three digits, counting from the right (32,904 _NOT 32904_). Exceptions: page numbers, addresses, port numbers, etc.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d{4,}", "[Hh]undred", "[Tt]housand", "[MmBbTt][r]?illion"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use numerals for versions (version 5 or v5).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[Vv]ersion"]
+					}
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use a numeral if it’s an actual value (e.g., 5% 7″ $6.00, 32-bit integer).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d", "(?:[Zz]ero|\b[Oo]ne|[Tt]wo|[Tt]hree|[Ff]our|[Ff]ive|[Ss]ix|[Ss]even|[Ee]ight|[Nn]ine|[Tt]en|[Ee]leven|[Tt]welve|[Tt]hir(?:teen|ty)|[Ff]if(?:teen|ty)|[Tt]wenty|[Ff]orty|[Hh]undred|[Tt]housand|[MmBbTt][Rr]?illion)"]
+					}				],
+				"always_insert": false
+			},
+			{
+				"content": "Whole numbers one through nine followed by hundred, thousand, million, billion, and so forth are usually spelled out (except in the sciences or with monetary amounts).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[Hh]undred", "[Tt]housand", "[MmBbTt][r]?illion"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use an en dash (–) with negative numbers or for minus signs, rather than a hyphen.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["-\\d"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use multiplication symbol “×” for dimensions, not \"by\" (e.g., \"8.5 × 11\").",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d[\\S\\n]*?(?:by|x)[\\S\\n]*?\\d"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use spaces around inline operators (1 + 1 = 2. NOT 1+1=2).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\d[\\S\\n]*?(?×|x|+|–)[\\S\\n]*?\\d"]
+					}	
+				],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Lists",
+		"rules": [
+			{
+				"content": "List items are sentence-capped.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^[\\S]?(?:-|*|\\.|\\d*\\.)\\S", "\\w::\\S"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "List items should be treated as separate items and should not be strung together with punctuation or conjunctions.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^[\\S]?(?:-|*|\\.|\\d*\\.)\\S"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Unless one item in a list forms a complete sentence, the list's items do not take periods. If one does form a complete sentence, use periods for all items within that list, even fragments.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^[\\S]?(?:-|*|\\.|\\d*\\.)\\S", "\\w::\\S"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Frequently, bulleted lists should be converted to variable lists. Any bulleted list whose entries consist of a short term and its definition should be converted. For example, the following bulleted list entries:\nSpellchecking: process of correcting spelling\nPagebreaking—process of breaking pages should be variable list entries:\n_Spellchecking_:: Process of correcting spelling\n_Pagebreaking_:: Process of breaking pages",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^[\\S]?(?:-|*)\\S.*:"]
+					}	
+				],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Punctuation",
+		"rules": [
+			{
+				"content": "Commas and periods go inside quotation marks.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["(?:\"|'|’|”),"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Ellipses are always closed (no space around them).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": [".[\\S]?.[\\S]?.", "…"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Em dashes are always closed (no space around them).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": [" — "]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Footnote markers in running text should always appear _after_ punctuation.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["footnote:"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "For menu items that end with an ellipsis (e.g., \"New Folder…\"), do not include ellipsis in running text.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": [".[\\S]?.[\\S]?.", "…"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Lowercase the first letter after a colon: this is how we do it. (Exception: headings.)",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": [":\\S*?[A-Z]"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Parentheses are always roman, even when the contents are italic.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[_*]\\(|\\)[_*]"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "For parentheses within parentheses, use square brackets (here’s the first parenthetical [and here’s the second]).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\([^\\)]*?\\("]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Serial comma (this, that, and the other).",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": true
+			},
+			{
+				"content": "Straight quotes (\" \" not “ ”) in constant-width text and all code.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["“|”"]
+					}	
+				],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Typography",
+		"rules": [
+			{
+				"content": "Use italic text for URLs, URIs, email addresses, domain names and emphasized words.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["http", "\\w\\.\\w", "@", "**"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use code font for elements of code, such as class names, types, namespaces, attributes, methods, variables, keywords, functions, modules, commands, properties, parameters, values, objects, events, XML and HTML tags, and similar elements.",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": true
+			},
+			{
+				"content": "Use bold code font for commands or text to be typed literally by the user.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[`+]"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use italic code font for snippets in code meant to be replaced with an actual value by the user.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[`+]"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use body text for keyboard accelerators (Ctrl, Shift, etc.), menu titles, menu options, menu buttons, and packages and libraries not being shown in a usage context (i.e., not being used in code).",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			}
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	},
+	{
+		"category": "Miscellaneous",
+		"rules": [
+			{
+				"content": "Avoid language that is unnecessarily gendered (e.g., middleman, man hours), violent (e.g., hit, kill), and otherwise exclusionary, incendiary, or imprecise (e.g., crazy, dummy, master/slave, tribe).",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			},
+			{
+				"content": "Avoid associating positive or negative characteristics with colors that are also associated, problematically, with people (blackbox, black hat, white list, etc.).",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[Bb]lack|[Ww]hite"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Avoid obscenities and slurs, and obscure if included (grawlix, a two-em dash, etc.)",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			},
+			{
+				"content": "Avoid using the possessive case for singular nouns ending in “s,” if possible. So, it’s “the Windows Start menu,” not “Windows’s Start menu.”",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["\\ws['’]s"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Avoid wholesale changes to the author’s voice—for example, changing the first-person plural (the royal “we”) to the first-person singular or the second person. However, do try to maintain a consistency within sentences or paragraphs, where appropriate.",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			},
+			{
+				"content": "Close up words with the following prefixes (unless part of a proper noun) “micro,” “meta,” “multi,” “pseudo,” “re,” “non,” “sub,” and \"co\" (e.g., “multiusers,” “pseudoattribute,” “nonprogrammer,” “subprocess,” \"coauthor\"). Exceptions are noted in the word list (e.g., \"re-create,\" \"re-identification\").",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["(?:[Mm]icro|[Mm]eta|[Mm]ulti|[Pp]seudo|[Rr]e|[Nn]on|[Ss]ub|[Cc]o)-"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Common foreign terms (such as “en masse”) are roman.",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			},
+			{
+				"content": "Companies are always singular. So, for example, “Apple emphasizes the value of aesthetics in its product line. Consequently, it dominates the digital-music market” is correct. “Apple emphasize the value of aesthetics in their product line. They dominate the digital-music market” is _not_. (Also applies to generic terms “organization,” “team,” “group,” etc.)",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			},
+			{
+				"content": "Do not use a hyphen between an adverb and the word it modifies. So, “incredibly wide table” rather than “incredibly-wide table.”",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["ly-"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Introduce uncaptioned code blocks, figures, and tables with colons.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["^----", "^====$", "image:", "|==="]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use “between” for two items, “among” for three or more. Use “each other” for two, “one another” for three or more.",
+				"scope": "local",
+				"insertion_conditions": [
+					{
+						"format": "asciidoc",
+						"patterns": ["[Bb]etween", "[Aa]mong", "(?:[Ee]ach|[Oo]ne)\\S*?(?:an)other)"]
+					}	
+				],
+				"always_insert": false
+			},
+			{
+				"content": "Use the American spellings of words when they differ.",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			},
+			{
+				"content": "We advise using a conversational, user-friendly tone that assumes the reader is intelligent but doesn’t have this particular knowledge yet—like an experienced colleague onboarding a new hire. First-person pronouns, contractions, and active verbs are all encouraged.",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": true
+			},
+			{
+				"content": "When referring to software elements or labels, always capitalize words that are capitalized on screen. Put quotes around any multiword element names that are lowercase or mixed case on screen and would thus be hard to distinguish from the rest of the text (e.g., Click “Don’t select object until rendered” only if necessary.)",
+				"scope": "local",
+				"insertion_conditions": [],
+				"always_insert": false
+			}
+			
+		],
+		"insertion_conditions": [],
+		"always_insert": false
+	}
+]

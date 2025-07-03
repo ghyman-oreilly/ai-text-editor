@@ -1,0 +1,16 @@
+
+* A.M. and P.M. or a.m. and p.m.—be consistent.
+
+* University degrees (e.g., B.A., B.S., M.A., M.S., Ph.D., etc.) can appear with or without periods—just be consistent.
+
+* United States and United Kingdom should be spelled out on first mention. After that, just use the acronym with no periods (so, US or UK).
+
+* When referring to another book within a book’s text, on first reference, include author and publisher name. For example, "You can find more information in _The Elements of Typographic Style_ by Robert Bringhurst (H&M)," or "For more information, consult Robert Bringhurst’s _The Elements of Typographic Style_ (H&M)." On subsequent references, just use the book title.
+
+* Every formally numbered figure, table, and example should be preceded by a specific in-text reference using the element's ID (for example: see <<figure-1-99>>; <<example-1-99>> shows; <<table-1-1>> lists, etc.). Formal figures, tables, and examples should not be introduced with colons or phrases like “in the following figure,” or “as shown in this table.” Though we do support unnumbered informal figures/tables/examples, these should be used only for elements whose contents are not discussed at length or referred back to.
+
+* Use italic text for the first instance of a technical term
+
+* Do not stack admonitions, sidebars, or headings.
+
+* Introduce uncaptioned code blocks, figures, and tables with colons.

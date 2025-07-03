@@ -21,9 +21,13 @@ A script for using AI to edit documents in alignment with an editorial styleshee
 
 * Split style guides into local and global lists
 
+* For style guides, use regex pattern matching and tokenization strategy to inject rules
+
 * Add global review pass (no text edits: informational only: figs missing a reference, repeated acronym definitions, etc. etc.)
 
 * Some post-processing of responses:
   * Check for backtickets (```r'^[`]*|[`]*$'```) enclosing response, where not present in original
   * Check for language tag where not in the original
   * URL format? Caption format? Headings? We might be able to regex this stuff instead of doing a QA pass 
+
+  

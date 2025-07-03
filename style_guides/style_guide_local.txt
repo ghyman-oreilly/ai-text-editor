@@ -1,0 +1,104 @@
+
+## Headings
+
+* Use title case for level A and B headings (represented by === and ==== in AsciiDoc format).
+* Use sentence case for level C and D headings (represented by ===== and ====== in AsciiDoc format).
+* Use title case for sidebar headings/captions.
+* Use title case for admonition headings (e.g., Notes, Warnings, Tips).
+* Code font, italic font, and bold font are not permitted in headings.
+* The casing of proper nouns and elements of code should not be changed to fit with the surrounding heading.
+* Prepositions of four letters or fewer are not initial-capped, unless they function as part of a verb (e.g., “Set Up Your Operating System”). 
+
+## Captions
+
+* Use sentence case for image, table, and example captions/titles.
+* Image, table, and example captions/titles do not end in a period unless they contain more than one complete sentence.
+* Code font is permitted in image, table, and example captions/titles.
+
+## URLs and Links
+
+* Avoid using "above" and "below" to reference figures, tables, examples, unnumbered code blocks, equations, etc. (e.g., "In the example below…"). Using live cross references with the element ID (e.g., "see <<figure-21>>") is best, but when that’s not possible, use "preceding" or "following," as the physical placement of elements could be different in reflowable formats.
+* Anchor URLs to text nodes whenever possible, like you would on a website.
+* Avoid anchoring URLs to generic words or phrases such as "here," "this website," etc. Be as descriptive as possible.
+* Do not link to products on any sales channels other than oreilly.com, including Apple, Google, or Amazon. Apple and Google will refuse to sell content that links to products on Amazon. However, saying "XX book is available on Amazon"—sans link—is OK.
+
+## Abbreviations and Acronyms
+
+* In units of measure, do not use a hyphen. For example, it’s 32 MB hard drive, not 32-MB hard drive. (Though when the unit is spelled out, use a hyphen, e.g., 32-megabyte hard drive.)
+* K = 1,024; k = 1,000. So a 56 kbps modem is equal to 56,000 bps, while 64 K of memory is equal to 65,536.
+* Many acronyms are common enough that they should be used without expanding. For our books, that typically includes (but is not limited to) AI when it stands for artificial intelligence, API (application programming interface), CLI (command-line interface), CPU (central processing unit), HTML (HyperText Markup Language), IP (Internet Protocol), UI (user interface), UX (user experience), etc.
+
+## Bibliographical Entries and Citations
+
+* When citing materials in bibliographies, reference lists, or footnotes, use the “Notes and Bibliography” system from The Chicago Manual of Style, 18th edition. Chicago also has an Author-Date system that some authors prefer, which is perfectly acceptable. If there is no discernible consistency, use Chicago's Notes for footnotes and Bibliography for endnotes or back matter.
+* In general, when referring to another book within a book’s text, include the author name(s) for up to two authors. For three or more authors, state the first author name, followed by “et al.” 
+* When referencing an O’Reilly book within the text, note only "O’Reilly" in parentheses, not "O’Reilly Media, Inc." References to other O’Reilly books should be linked to the book’s http://shop.oreilly.com/category/browse-subjects.do[catalog page].
+* Footnotes should contain more than just a URL, whether a full citation for the text the URL points to or context for where the link leads.
+
+## Dates and Numbers
+
+* Always use the symbol % with numerals rather than the spelled out word (percent), and make sure it is closed up to number: 0.05%. Unless the percentage begins a sentence or title/caption, the number should be a numeral with the % symbol.
+* Spell out numbers from zero to nine and certain round multiples of those numbers unless the same object appears in a sentence with an object 10 or over (five apples; five apples and one hundred oranges; 5 apples and 110 oranges).
+* Spell out ordinal numbers first through ninth, use numerals for 10th and above. No superscript.
+* Centuries follow the same zero through nine rule, so those will usually be numerals (i.e., 20th century, 21st century).
+* In most numbers of one thousand or more, commas should be used between groups of three digits, counting from the right (32,904 _NOT 32904_). Exceptions: page numbers, addresses, port numbers, etc.
+* Use numerals for versions (version 5 or v5).
+* Use a numeral if it’s an actual value (e.g., 5% 7″ $6.00, 32-bit integer).
+* Whole numbers one through nine followed by hundred, thousand, million, billion, and so forth are usually spelled out (except in the sciences or with monetary amounts).
+* Use an en dash (–) with negative numbers or for minus signs, rather than a hyphen.
+* Use multiplication symbol “×” for dimensions, not "by" (e.g., "8.5 × 11").
+* Use spaces around inline operators (1 + 1 = 2. NOT 1+1=2).
+
+## Lists
+
+* List items are sentence-capped. 
+* List items should be treated as separate items and should not be strung together with punctuation or conjunctions. 
+* Unless one item in a list forms a complete sentence, the list's items do not take periods. If one does form a complete sentence, use periods for all items within that list, even fragments.
+* Frequently, bulleted lists should be converted to variable lists. Any
+bulleted list whose entries consist of a short term and its definition
+should be converted. For example, the following bulleted list entries:
+  * Spellchecking: process of correcting spelling
+  * Pagebreaking—process of breaking pages
+  should be variable list entries:
+  _Spellchecking_::
+    Process of correcting spelling
+  _Pagebreaking_::
+    Process of breaking pages
+
+## Punctuation
+
+* Commas and periods go inside quotation marks.
+* Ellipses are always closed (no space around them).
+* Em dashes are always closed (no space around them).
+* Footnote markers in running text should always appear _after_ punctuation.
+* For menu items that end with an ellipsis (e.g., "New Folder…"), do not include ellipsis in running text.
+* Lowercase the first letter after a colon: this is how we do it. (Exception: headings.)
+* Parentheses are always roman, even when the contents are italic. 
+* For parentheses within parentheses, use square brackets (here’s the first parenthetical [and here’s the second]).
+* Serial comma (this, that, and the other).
+* Straight quotes (" " not “ ”) in constant-width text and all code.
+
+## Typography
+
+* Use italic text for: URLs, URIs, email addresses, domain names and emphasized words
+* Use code font for: elements of code
+* Use bold code font for: commands or text to be typed literally by the user
+* Use italic code font for: snippets in code meant to be replaced with an actual value by the user
+* Use body text for: keyboard accelerators (Ctrl, Shift, etc.), menu titles, menu options, menu buttons, and packages and libraries not being shown in a usage context (i.e., not being used in code)
+
+## Miscellaneous 
+
+* Avoid language that is unnecessarily gendered (e.g., middleman, man hours), violent (e.g., hit, kill), and otherwise exclusionary, incendiary, or imprecise (e.g., crazy, dummy, master/slave, tribe).
+* Avoid associating positive or negative characteristics with colors that are also associated, problematically, with people (blackbox, black hat, white list, etc.).
+* Avoid obscenities and slurs, and obscure if included (grawlix, a two-em dash, etc.)
+* Avoid using the possessive case for singular nouns ending in “s,” if possible. So, it’s “the Windows Start menu,” not “Windows’s Start menu.”
+* Avoid wholesale changes to the author’s voice—for example, changing the first-person plural (the royal “we”) to the first-person singular or the second person. However, do try to maintain a consistency within sentences or paragraphs, where appropriate.
+* Close up words with the following prefixes (unless part of a proper noun) “micro,” “meta,” “multi,” “pseudo,” “re,” “non,” “sub,” and "co" (e.g., “multiusers,” “pseudoattribute,” “nonprogrammer,” “subprocess,” "coauthor"). Exceptions are noted in the word list (e.g., "re-create," "re-identification").
+* Common foreign terms (such as “en masse”) are roman.
+* Companies are always singular. So, for example, “Apple emphasizes the value of aesthetics in its product line. Consequently, it dominates the digital-music market” is correct. “Apple emphasize the value of aesthetics in their product line. They dominate the digital-music market” is _not_. (Also applies to generic terms “organization,” “team,” “group,” etc.)
+* Do not use a hyphen between an adverb and the word it modifies. So, “incredibly wide table” rather than “incredibly-wide table.”
+* Introduce unnumbered code blocks with colons.
+* Use “between” for two items, “among” for three or more. Use “each other” for two, “one another” for three or more.
+* Use the American spellings of words when they differ. 
+* We advise using a conversational, user-friendly tone that assumes the reader is intelligent but doesn’t have this particular knowledge yet—like an experienced colleague onboarding a new hire. First-person pronouns, contractions, and active verbs are all encouraged.
+* When referring to software elements or labels, always capitalize words that are capitalized on screen. Put quotes around any multiword element names that are lowercase or mixed case on screen and would thus be hard to distinguish from the rest of the text (e.g., Click “Don’t select object until rendered” only if necessary.)
