@@ -8,9 +8,10 @@ import time
 from typing import List, Union
 
 from ai_service import AIServiceCaller
+from embeddings import check_and_update_embedding_items
 from helpers import check_asciidoctor_installed, get_text_file_content, get_json_file_content
 from models import AsciiFile, load_style_guide
-from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, check_and_update_embedding_items, generate_prompt_text, generate_style_guide_text
+from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, generate_prompt_text, generate_style_guide_text
 from read_files import read_files
 from write_files import write_files
 
@@ -211,11 +212,11 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
 
     word_list = get_text_file_content(word_list_filepath).split('\n')
 
-    style_guide = load_style_guide(local_style_rules_filepath, "local")
+    style_guide = load_style_guide(local_style_rules_filepath)
 
     word_list_embeddings = check_and_update_embedding_items(word_list, word_list_w_embeddings_filepath, embedding_model, ai_service_caller.generate_st_embedding)
 
-    local_styles_list = [r["content"] for i in get_json_file_content(local_style_rules_filepath) for r in i["rules"]]
+    local_styles_list = [r["content"] for i in get_json_file_content(local_style_rules_filepath).get('categories', []) for r in i["rules"]]
 
     local_style_embeddings = check_and_update_embedding_items(local_styles_list, local_style_rules_w_embeddings_filepath, embedding_model, ai_service_caller.generate_st_embedding)
 
@@ -274,13 +275,12 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
             write_backup_to_json_file(all_text_files, backup_data_filepath)
             click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")
 
-    click.echo("Sending edited text to AI service for QA...")
-
     # if all edited, send original text and edited to AI service for QA
     if (
         all(b.is_edited for f in all_text_files for b in f.text_blocks)
         and not disable_qa_pass
     ):
+        click.echo("Sending edited text to AI service for QA...")
         block_counter = 0
         no_issue_str = 'NO_ISSUE'
         for i, text_file in enumerate(all_text_files):
@@ -324,6 +324,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
     if all(b.is_edited and (disable_qa_pass or b.is_qaed) for f in all_text_files for b in f.text_blocks):
         click.echo("Writing edited text to source files...")
         write_files(all_text_files)
+    else:
+        click.echo("Unable to update source files: editing or QA pass not completed.")
 
     click.echo("Script complete.")
 

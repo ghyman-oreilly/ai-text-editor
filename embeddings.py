@@ -67,9 +67,9 @@ def check_and_update_embedding_items(
         cached = read_npz_embeddings(filepath)
         if (
             len(cached) != len(raw_items)
-            or [c["hash_val"] for c in cached] != compute_hashes(raw_items)
-            or any(e["model"] != model for e in cached)
-            or any(not e["embedding"] for e in cached)
+            or [c.hash_val for c in cached] != compute_hashes(raw_items)
+            or any(e.model != model for e in cached)
+            or any(not e.embedding for e in cached)
         ):
             logger.info("Detected changes or inconsistencies, regenerating embeddings.")
             embeddings = [

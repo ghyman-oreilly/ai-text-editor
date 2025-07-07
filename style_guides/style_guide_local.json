@@ -375,7 +375,7 @@
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["\\d[\\S\\n]*?(?×|x|+|–)[\\S\\n]*?\\d"]
+							"patterns": ["\\d[\\S\\n]*?(?:×|x|\\+|–)[\\S\\n]*?\\d"]
 						}	
 					],
 					"always_insert": false
@@ -393,7 +393,7 @@
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["^[\\S]?(?:-|*|\\.|\\d*\\.)\\S", "\\w::\\S"]
+							"patterns": ["^[\\S]?(?:-|\\*|\\.|\\d*\\.)\\S", "\\w::\\S"]
 						}	
 					],
 					"always_insert": false
@@ -404,7 +404,7 @@
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["^[\\S]?(?:-|*|\\.|\\d*\\.)\\S"]
+							"patterns": ["^[\\S]?(?:-|\\*|\\.|\\d*\\.)\\S"]
 						}	
 					],
 					"always_insert": false
@@ -415,7 +415,7 @@
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["^[\\S]?(?:-|*|\\.|\\d*\\.)\\S", "\\w::\\S"]
+							"patterns": ["^[\\S]?(?:-|\\*|\\.|\\d*\\.)\\S", "\\w::\\S"]
 						}	
 					],
 					"always_insert": false
@@ -426,7 +426,7 @@
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["^[\\S]?(?:-|*)\\S.*:"]
+							"patterns": ["^[\\S]?(?:-|\\*)\\S.*:"]
 						}	
 					],
 					"always_insert": false
@@ -556,7 +556,7 @@
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["http", "\\w\\.\\w", "@", "**"]
+							"patterns": ["http", "\\w\\.\\w", "@", "\\*\\*"]
 						}	
 					],
 					"always_insert": false
@@ -693,7 +693,7 @@
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["[Bb]etween", "[Aa]mong", "(?:[Ee]ach|[Oo]ne)\\S*?(?:an)other)"]
+							"patterns": ["[Bb]etween", "[Aa]mong", "(?:[Ee]ach|[Oo]ne)\\S*?(?:an)other"]
 						}	
 					],
 					"always_insert": false

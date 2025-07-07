@@ -126,8 +126,8 @@ def generate_style_guide_text(
         string representing style guide portion of prompt
     """
     text_passage_embedding = embed_function(text_passage)
-    relevant_word_list_terms = [i.content for i in filter_by_vector_similarity(word_list_embeddings, text_passage_embedding)]
-    relevant_style_rules = [i.content for i in filter_by_vector_similarity(local_style_rules_embeddings, text_passage_embedding)]
+    relevant_word_list_terms = [i for i in filter_by_vector_similarity(word_list_embeddings, text_passage_embedding)]
+    relevant_style_rules = [i for i in filter_by_vector_similarity(local_style_rules_embeddings, text_passage_embedding)]
     if other_style_rules_to_inject:
          relevant_style_rules = list(set(relevant_style_rules) | set(other_style_rules_to_inject))
     style_rules_str = '=== Style Rules' + '\n' + '\n'.join(relevant_style_rules) if relevant_style_rules else ''

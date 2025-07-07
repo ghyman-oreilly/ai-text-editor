@@ -3,6 +3,7 @@ import logging
 from pydantic import BaseModel
 import openai
 import os
+import random
 from sentence_transformers import SentenceTransformer
 import time
 from typing import Optional, List, Dict, Union, Literal
@@ -99,26 +100,24 @@ class AIServiceCaller:
                 user_role=UserRole(content=prompt_user_content)
             )
 
-    def call_ai_service(
-            self, 
-            prompt: Prompt,
-            delay: int = 0.5,
-    ):
-        """
-        Call OpenAI responses API.
-        """
-        try:
-            response = client.responses.create(
-                model=self.responses_model,
-                input=prompt.as_messages()
-            )
-            
-            time.sleep(delay)
+    def call_ai_service(self, prompt: Prompt, delay: float = 0.5, max_retries: int = 5):
+        for attempt in range(max_retries):
+            try:
+                response = client.responses.create(
+                    model=self.responses_model,
+                    input=prompt.as_messages()
+                )
+                time.sleep(delay)
+                return response.output_text
 
-            return response.output_text
-        except Exception as e:
-            logger.error(f"Error calling AI service: {e}")
-            return None
+            except Exception as e:
+                wait = delay * (2 ** attempt)
+                jittered_wait = wait * random.uniform(0.8, 1.2)
+                logging.warning(f"Retrying after {jittered_wait:.1f}s due to error...")
+                time.sleep(jittered_wait)
+
+        logging.error("Max retries exceeded.")
+        return None
 
     def generate_openai_embedding(
         self,

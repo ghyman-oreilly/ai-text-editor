@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 import re
 from typing import List, Literal, Optional, Union
 
@@ -64,28 +64,38 @@ class AsciiFile(TextFile):
     file_format: TextFileFormat = "asciidoc"
 
 
+class InvalidPatternError(ValueError):
+    def __init__(self, pattern: str, error_msg: str):
+        super().__init__(f"Invalid regex pattern: '{pattern}' — {error_msg}")
+        self.pattern = pattern
+        self.error_msg = error_msg
+
+
 class StyleInsertionCondition(BaseModel):
     format: Literal['asciidoc']
-    patterns: Union[List[str]] = []
+    patterns: List[str] = []
 
+    @model_validator(mode='after')
+    def validate_patterns(self):
+        for pattern in self.patterns:
+            try:
+                re.compile(pattern)
+            except re.error as e:
+                raise InvalidPatternError(pattern, str(e))
+        return self
 
 class StyleRule(BaseModel):
     content: str
     scope: Literal['local', 'global']
-    insertion_conditions: Union[List[StyleInsertionCondition], List] = []
+    insertion_conditions: List[StyleInsertionCondition] = []
     always_insert: bool = False
 
 
 class StyleCategory(BaseModel):
-    name: str = Field(alias="category")
+    category: str = Field(alias="category")
     rules: List[StyleRule]
-    insertion_conditions: Union[List[StyleInsertionCondition], List] = []
+    insertion_conditions: List[StyleInsertionCondition] = []
     always_insert: bool = False
-
-
-class StyleGuide(BaseModel):
-    categories: List[StyleCategory]
-    scope: Literal['local', 'global']
 
 
 class StyleGuide(BaseModel):
@@ -109,13 +119,13 @@ class StyleGuide(BaseModel):
         for category in self.categories:
             category_matches = (
                 category.always_insert or
-                matches_insertion_conditions(input_text, category.insertion_conditions, file_format)
+                matches_insertion_conditions(input_text, file_format, category.insertion_conditions)
             )
 
             for rule in category.rules:
                 rule_matches = (
                     rule.always_insert or
-                    matches_insertion_conditions(input_text, rule.insertion_conditions, file_format)
+                    matches_insertion_conditions(input_text, file_format, rule.insertion_conditions)
                 )
 
                 if category_matches or rule_matches:
@@ -131,28 +141,23 @@ class Embedding(BaseModel):
     model: str
 
 
-def load_style_guide(path: Union[str, Path], scope: Literal["local", "global"] = "local") -> StyleGuide:
+def load_style_guide(path: Union[str, Path]) -> StyleGuide:
     with open(str(path), 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # Wrap the list under the expected root schema
-    wrapped_data = {
-        "scope": scope,
-        "categories": data
-    }
-
-    return StyleGuide.model_validate(wrapped_data)
+    return StyleGuide.model_validate(data)
 
 def matches_insertion_conditions(
     input_text: str,
-    conditions: List[StyleInsertionCondition],
-    file_format: Literal["asciidoc"]
+    file_format: Literal["asciidoc"],
+    conditions: Optional[List[StyleInsertionCondition]] = []
 ) -> bool:
-    for cond in conditions:
-        if cond.format != file_format:
-            continue
-        for pattern in cond.patterns:
-            if re.search(pattern, input_text, flags=re.MULTILINE):
-                return True
+    if conditions:
+        for cond in conditions:
+            if cond.format != file_format:
+                continue
+            for pattern in cond.patterns:
+                if re.search(pattern, input_text, flags=re.MULTILINE):
+                    return True
     return False
 
