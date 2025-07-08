@@ -562,7 +562,7 @@
 					"always_insert": false
 				},
 				{
-					"content": "Use monospace font for class names, types, namespaces, attributes, methods, variables, keywords, functions, modules, commands, properties, parameters, values, objects, events, XML and HTML tags, and similar elements.",
+					"content": "Use monospace font for class names, types, namespaces, attributes, methods, variables, keywords, functions, modules, commands, properties, parameters, values, objects, events, XML and HTML tags, and similar elements. Official tool/software names do not need to appear in monospace font.",
 					"scope": "local",
 					"insertion_conditions": [],
 					"always_insert": true

@@ -33,7 +33,7 @@
 			"category": "Typography",
 			"rules": [
 				{
-					"content": "Use italic text for the first instance of a technical term",
+					"content": "Use italic text to introduce a new technical term, if the technical term is being defined/explained for the first time.",
 					"scope": "global",
 					"insertion_conditions": [],
 					"always_insert": true
