@@ -9,9 +9,9 @@ from typing import List, Union
 
 from ai_service import AIServiceCaller
 from embeddings import check_and_update_embedding_items
-from helpers import check_asciidoctor_installed, get_text_file_content, get_json_file_content
+from helpers import check_asciidoctor_installed, get_text_file_content, get_json_file_content, write_text_to_file
 from models import AsciiFile, load_style_guide
-from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, generate_prompt_text, generate_style_guide_text
+from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, GLOBAL_REVIEW_PROMPT_BASE_TEXT, generate_prompt_text, generate_style_guide_text
 from read_files import read_files
 from write_files import write_files
 
@@ -157,6 +157,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
     word_list_w_embeddings_filepath = Path(style_guide_dir / 'wordlist_w_embeddings.npz')
     local_style_rules_filepath = Path(style_guide_dir / 'style_guide_local.json')
     local_style_rules_w_embeddings_filepath = Path(style_guide_dir / 'style_local_w_embeddings.npz')
+    global_style_rules_filepath = Path(style_guide_dir / 'style_guide_global.json')
+    global_review_output_filepath = Path(cwd / f"{'global_review_' + str(int(time.time())) + '.md'}")
 
     embedding_model = 'BAAI/bge-small-en-v1.5'
 
@@ -212,7 +214,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
 
     word_list = get_text_file_content(word_list_filepath).split('\n')
 
-    style_guide = load_style_guide(local_style_rules_filepath)
+    local_style_guide = load_style_guide(local_style_rules_filepath)
+    global_style_guide = load_style_guide(global_style_rules_filepath)
 
     word_list_embeddings = check_and_update_embedding_items(word_list, word_list_w_embeddings_filepath, embedding_model, ai_service_caller.generate_st_embedding)
 
@@ -240,14 +243,14 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
             
             original_content = text_block.original_content
 
-            deterministically_matched_style_rules = style_guide.get_matching_rule_contents(original_content, 'asciidoc')
+            deterministically_matched_local_style_rules = local_style_guide.get_matching_rule_contents(original_content, 'asciidoc')
 
-            style_guide_text = generate_style_guide_text(
+            local_style_guide_text = generate_style_guide_text(
                 text_passage=original_content,
                 word_list_embeddings=(word_list_embeddings if word_list_embeddings else None),
                 local_style_rules_embeddings=(local_style_embeddings if local_style_embeddings else None),
                 embed_function=ai_service_caller.generate_st_embedding,
-                other_style_rules_to_inject=(deterministically_matched_style_rules if deterministically_matched_style_rules else None)
+                other_style_rules_to_inject=(deterministically_matched_local_style_rules if deterministically_matched_local_style_rules else None)
             )
 
             prompt_text = generate_prompt_text(
@@ -255,12 +258,16 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
                 model="gpt-4o",
                 max_tokens_per_prompt=20000,
                 template_kwargs={
-                    "style_guide": style_guide_text,
+                    "style_guide": local_style_guide_text,
                     "preceding_passage": preceding_text_block,
                     "format_type": 'asciidoc',
                     "passage_to_be_edited": original_content,
                 }
             )
+
+            if not prompt_text:
+                click.echo("Unable to generate prompt text. Skipping...")
+                continue
 
             prompt = ai_service_caller.create_prompt_object(prompt_text)
             edited_text = ai_service_caller.call_ai_service(prompt)
@@ -309,6 +316,10 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
                     }
                 )
 
+                if not prompt_text:
+                    click.echo("Unable to generate prompt text. Skipping...")
+                    continue
+
                 prompt = ai_service_caller.create_prompt_object(prompt_text)
                 response = ai_service_caller.call_ai_service(prompt)
 
@@ -319,6 +330,51 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
 
                 write_backup_to_json_file(all_text_files, backup_data_filepath)
                 click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")     
+
+    # send chapters to ai service for global review
+    if all(b.is_edited and (disable_qa_pass or b.is_qaed) for f in all_text_files for b in f.text_blocks):
+        global_issues = []
+        click.echo("Sending edited text to AI service for global review...")
+        for i, text_file in enumerate(all_text_files):
+            edited_text = text_file.get_qaed_edited_content()
+            click.echo(f"Sending {i+1} of {len(all_text_files)} text files for global review...")
+            
+            # we can update this to incorporate embedding comparison if/as needed,
+            # but for now all global rules are set to always_insert
+            deterministically_matched_global_style_rules = global_style_guide.get_matching_rule_contents(edited_text, 'asciidoc')
+
+            prompt_text = generate_prompt_text(
+                prompt_template=GLOBAL_REVIEW_PROMPT_BASE_TEXT,
+                model="gpt-4o",
+                max_tokens_per_prompt=100000,
+                template_kwargs={
+                    'style_guide': deterministically_matched_global_style_rules,
+                    'no_issue_str': no_issue_str,
+                    'passage_to_be_reviewed': edited_text,
+                }
+            )
+
+            if not prompt_text:
+                click.echo("Unable to generate prompt text. Skipping...")
+                continue
+
+            prompt = ai_service_caller.create_prompt_object(prompt_text)
+            response = ai_service_caller.call_ai_service(prompt)
+
+            if response:
+                if response.strip().lower() != no_issue_str.lower():
+                    global_issues.append((text_file.filepath, response))
+                else:
+                    global_issues.append((text_file.filepath, "No issues noted."))
+        if global_issues:
+            # write issues to file
+            global_issues_str = '\n\n'.join([f"## {f}\n\n{i}" for f, i in global_issues])
+            write_text_to_file(global_review_output_filepath, global_issues_str)
+            click.echo(f"Global review notes written to {global_review_output_filepath}...")
+        else:
+            click.echo("No global issues noted. Global review notes not written to file.")
+    else:
+        click.echo("Unable to send text to AI service for global review: editing or QA pass not completed.")        
 
     # if all processed and QAed, save edited text to files
     if all(b.is_edited and (disable_qa_pass or b.is_qaed) for f in all_text_files for b in f.text_blocks):

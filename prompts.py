@@ -10,11 +10,6 @@ from helpers import count_token_length, get_text_file_content
 from models import Embedding
 
 
-class MaxTokensExceeded(Exception):
-	"""Raise when prompt exceeds max token limit"""
-	pass
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -74,6 +69,34 @@ Otherwise, return the entire corrected passage, and nothing else. Do not return 
 Return either exactly {no_issue_str} or the fully corrected version of the edited passage. Do not explain, justify, or add instructions.
 """
 
+GLOBAL_REVIEW_PROMPT_BASE_TEXT = """
+You are an expert copyeditor. Review the passage below for problems of consistency or style, based on the accompanying style guide. Do not summarize or restate style rules unless the passage actively violates them. Only report issues that appear directly in the quoted text.
+
+[BEGIN STYLE GUIDE]
+
+{style_guide}
+
+[END STYLE GUIDE]
+
+[BEGIN PASSAGE TO REVIEW]
+
+{passage_to_be_reviewed}
+
+[END PASSAGE TO REVIEW]
+
+Present your output as a list of issues in the following Markdown format:
+
+Use a numbered list.
+Each item should have:
+A bolded brief title.
+A short explanation of the issue.
+A section labeled Original Text: containing the exact sentence or phrase from the passage that exhibits the problem.
+An optional section labeled Suggested Text: with your suggested correction.
+Do not include entries for rules that aren’t violated in the passage.
+
+If no issues are found in the passage, respond only with: NO_ISSUE
+"""
+
 
 def generate_prompt_text(
     prompt_template: str,
@@ -91,10 +114,7 @@ def generate_prompt_text(
         template_kwargs: Dictionary of keyword substitutions that match the template's placeholders.
 
     Returns:
-        Fully formatted prompt string, ready for LLM input.
-
-    Raises:
-        MaxTokensExceeded: If resulting token count exceeds model-specific limits.
+        Fully formatted prompt string, ready for LLM input, or None.
     """
     try:
         prompt_text = prompt_template.format(**template_kwargs)
@@ -104,10 +124,8 @@ def generate_prompt_text(
     tokens = count_token_length(prompt_text, model)
 
     if tokens > max_tokens_per_prompt:
-        raise MaxTokensExceeded(
-            f"Prompt has {tokens} tokens, which exceeds model limit of {max_tokens_per_prompt}"
-        )
-
+        logger.warning(f"Prompt contains {tokens} tokens, which exceeds model limit of {max_tokens_per_prompt}")
+        return None
     return prompt_text
 
 
