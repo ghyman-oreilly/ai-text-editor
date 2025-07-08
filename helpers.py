@@ -81,8 +81,16 @@ def get_json_file_content(filepath: Union[str, Path]):
     with open(str(filepath), "r", encoding="utf-8") as f:
         return json.load(f)
 
-def count_token_length(text: str, model: str = "gpt-4o") -> int:
-    enc = tiktoken.encoding_for_model(model)
+def count_token_length(text: str, model: str = "gpt-4o", encoding: str = "cl100k_base") -> int:
+    """
+    Count token length of input text.
+
+    cl100k_base encoding is used by gpt-4o, 3o, gpt-4.1, etc.
+    """
+    try:
+        enc = tiktoken.encoding_for_model(model)
+    except:
+        enc = tiktoken.get_encoding(encoding)
     return len(enc.encode(text))
 
 def compute_hash(text: str) -> str:
