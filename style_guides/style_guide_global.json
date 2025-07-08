@@ -44,6 +44,12 @@
 			"category": "Miscellaneous",
 			"rules": [
 				{
+					"content": "Unless very common and widely recognized, acronyms should be written out at first appearance only (e.g., \"graphical user interface (GUI)\"; thereafter, the just the acronym itself should be used.",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				},
+				{
 					"content": "Do not stack admonitions, sidebars, or headings.",
 					"scope": "global",
 					"insertion_conditions": [],
