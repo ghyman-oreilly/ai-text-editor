@@ -1,0 +1,73 @@
+{
+	"scope": "global",
+	"categories": [
+		{
+			"category": "URLs and Links",
+			"rules": [
+				{
+					"content": "Every formal, captioned image, table, and example should be preceded by a specific in-text reference using the element's ID (for example: see <<figure-1-99>>; <<example-1-99>> shows; <<table-1-1>> lists, etc.). Formal images, tables, and examples should not be introduced with colons or phrases like “in the following figure,” or “as shown in this table.” Though we do support unnumbered informal figures/tables/examples, these should be used only for elements whose contents are not discussed at length or referred back to.",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				},
+				{
+					"content": "Introduce uncaptioned code blocks, figures, and tables with colons.",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				}
+			]
+		},
+		{
+			"category": "Bibliographical Entries and Citations",
+			"rules": [
+				{
+					"content": "When referring to another book, on first reference, include author and publisher name. For example, \"You can find more information in _The Elements of Typographic Style_ by Robert Bringhurst (H&M),\" or \"For more information, consult Robert Bringhurst’s _The Elements of Typographic Style_ (H&M).\" On subsequent references, just use the book title.",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				}
+			]
+		},
+		{
+			"category": "Typography",
+			"rules": [
+				{
+					"content": "Use italic text for the first instance of a technical term",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				}
+			]
+		},
+		{
+			"category": "Miscellaneous",
+			"rules": [
+				{
+					"content": "Do not stack admonitions, sidebars, or headings.",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				},
+				{
+					"content": "United States and United Kingdom should be spelled out on first mention. After that, just use the acronym with no periods (so, US or UK).",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				},
+				{
+					"content": "University degrees (e.g., B.A., B.S., M.A., M.S., Ph.D., etc.) can appear with or without periods—just be consistent.",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				},
+				{
+					"content": "A.M. and P.M. or a.m. and p.m.—be consistent.",
+					"scope": "global",
+					"insertion_conditions": [],
+					"always_insert": true
+				}
+			]
+		}
+	]
+}
