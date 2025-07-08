@@ -89,7 +89,7 @@
 			"category": "Captions",
 			"rules": [
 				{
-					"content": "Use sentence case for image, table, and example captions/titles.",
+					"content": "Use sentence case for image, table, and example captions/titles (in Asciidoc, these captions begin with a period at the start of the line).",
 					"scope": "local",
 					"insertion_conditions": [
 						{
@@ -551,18 +551,18 @@
 			"category": "Typography",
 			"rules": [
 				{
-					"content": "Use italic text for URLs, URIs, email addresses, domain names and emphasized words.",
+					"content": "Use italic text for URLs, URIs, email addresses, filenames, folders, domain names and emphasized words. URLs that are anchored on descriptive text do not need to be italicized.",
 					"scope": "local",
 					"insertion_conditions": [
 						{
 							"format": "asciidoc",
-							"patterns": ["http", "\\w\\.\\w", "@", "\\*\\*"]
+							"patterns": ["http", "\\w\\.\\w", "@", "\\*\\*", "[Ff]older|[Dd]irectory"]
 						}	
 					],
 					"always_insert": false
 				},
 				{
-					"content": "Use code font for elements of code, such as class names, types, namespaces, attributes, methods, variables, keywords, functions, modules, commands, properties, parameters, values, objects, events, XML and HTML tags, and similar elements.",
+					"content": "Use monospace font for class names, types, namespaces, attributes, methods, variables, keywords, functions, modules, commands, properties, parameters, values, objects, events, XML and HTML tags, and similar elements.",
 					"scope": "local",
 					"insertion_conditions": [],
 					"always_insert": true
