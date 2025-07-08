@@ -9,22 +9,6 @@ A script for using AI to edit documents in alignment with an editorial styleshee
 
 ## TODO
 
-* Tokenize style guide and prompt instructions, and set max_tokens_per_block in extract_ascii_blocks based on remaining threshold (want to keep it small for focus), keeping selected model in mind
-
-* Set model in CLI and emit out to read_files and ai_service
-
-* Consider: for making text replacements, do we want to use regex search in combination with index tracking (the latter b/c there could be identical text blocks)?
-
-* Test .npz embeddings regen: word list change, etc.
-
-* Test whether performance/accuracy is better (following of instructions, adherence to guide, etc.) if we stick with the top X most impactful style rules (plus wordlist RAG)
-
-* Split style guides into local and global lists
-
-* For style guides, use regex pattern matching and tokenization strategy to inject rules
-
-* Add global review pass (no text edits: informational only: figs missing a reference, repeated acronym definitions, etc. etc.)
-
 * Some post-processing of responses:
   * Check for backtickets (```r'^[`]*|[`]*$'```) enclosing response, where not present in original
   * Check for language tag where not in the original
