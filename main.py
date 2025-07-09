@@ -9,7 +9,7 @@ from typing import List, Union
 
 from ai_service import AIServiceCaller
 from embeddings import check_and_update_embedding_items
-from helpers import check_asciidoctor_installed, get_text_file_content, get_json_file_content, write_text_to_file
+from helpers import check_asciidoctor_installed, clean_response, get_text_file_content, get_json_file_content, write_text_to_file
 from models import AsciiFile, load_style_guide
 from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, GLOBAL_REVIEW_PROMPT_BASE_TEXT, generate_prompt_text, generate_style_guide_text
 from read_files import read_files
@@ -301,6 +301,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False, model="gpt
             edited_text = ai_service_caller.call_ai_service(prompt)
 
             if edited_text:
+                edited_text = clean_response(edited_text, text_block.original_content)
+
                 text_block.ai_edited_content = edited_text
                 text_block.is_edited = True
 
@@ -352,6 +354,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False, model="gpt
                 response = ai_service_caller.call_ai_service(prompt)
 
                 if response:
+                    response = clean_response(response, text_block.original_content)
+
                     if response.strip().lower() != no_issue_str.lower():
                         text_block.ai_qaed_content = response
                     text_block.is_qaed = True
@@ -390,6 +394,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False, model="gpt
             response = ai_service_caller.call_ai_service(prompt)
 
             if response:
+                response = clean_response(response, text_block.original_content)
+                
                 if response.strip().lower() != no_issue_str.lower():
                     global_issues.append((text_file.filepath, response))
                 else:

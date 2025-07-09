@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
+import re
 import subprocess
 import tiktoken
 from typing import Union
@@ -95,3 +96,19 @@ def count_token_length(text: str, model: str = "gpt-4o", encoding: str = "cl100k
 
 def compute_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+def clean_response(response: str, original_text: str = ""):
+    """
+    Remove code fences from model response
+    """
+    cleaned = response
+
+    # Remove leading code fence if the original did not start with one
+    if re.match(r'```(?:[a-zA-Z0-9]+)?\s*', response) and not original_text.strip().startswith("```"):
+        cleaned = re.sub(r'^```(?:[a-zA-Z0-9]+)?\s*', '', cleaned)
+
+    # Remove trailing code fence if the original did not end with one
+    if re.search(r'```$', cleaned.strip()) and not original_text.strip().endswith("```"):
+        cleaned = re.sub(r'\s*```$', '', cleaned)
+
+    return cleaned
