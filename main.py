@@ -146,7 +146,13 @@ Provide one of the following:
 @click.argument("input_paths", nargs=-1)
 @click.option("--load-data-from-json", "-l", default=None, help="Provide the path to an optional JSON file of data backed up from a previous session. Useful for continuing your progress after a session is interrupted, without having to send all data back to the AI service. NOTE: Do not use this option if you've made changes in the repo since the backup file was produced, as it may overwrite your changes.")
 @click.option("--disable-qa-pass", "-q", is_flag=True, help="Disable QA pass of AI service calls designed to clean up any formatting errors introduced by the model. Model tends sporadically to convert some AsciiDoc formatting to Markdown during editing pass, likely due to large and complex prompting.")
-def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
+@click.option(
+    "--model",
+    type=click.Choice(["gpt-4o", "gpt-4.1", "o3"], case_sensitive=True),
+    default="gpt-4o",
+    help="Select your voice of AI model (default: gpt-4o)."
+)
+def cli(input_paths, load_data_from_json=None, disable_qa_pass=False, model="gpt-4o"):
     """Script for using AI to edit documents in alignment with an editorial stylesheet."""    
     
     if not input_paths:
@@ -166,6 +172,23 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
     global_review_output_filepath = Path(cwd / f"{'global_review_' + str(int(time.time())) + '.md'}")
 
     embedding_model = 'BAAI/bge-small-en-v1.5'
+
+    # handle user model selection
+    supported_models = ["gpt-4o", "gpt-4.1", "o3"]
+    
+    if model not in supported_models:
+        click.echo(f"Model {model} is not among supported models: {supported_models}. Exiting.")
+        sys.exit(1)
+    
+    max_token_dict = {
+        'gpt-4o': { 'editing': 20000, 'qa': 10000, 'global_review': 100000 },
+        'gpt-4.1': { 'editing': 20000, 'qa': 10000, 'global_review': 100000 },
+        'o3': { 'editing': 20000, 'qa': 10000, 'global_review': 100000 }
+    }
+
+    max_tokens_editing = max_token_dict[model]['editing']
+    max_tokens_qa = max_token_dict[model]['qa']
+    max_tokens_global_review = max_token_dict[model]['global_review']
 
     # look for JSON filelist for sorting chapter files
     speculative_atlas_json_filepath = Path(project_dir / "atlas.json")
@@ -260,8 +283,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
 
             prompt_text = generate_prompt_text(
                 prompt_template=COPYEDIT_PROMPT_BASE_TEXT,
-                model="gpt-4o",
-                max_tokens_per_prompt=20000,
+                model=model,
+                max_tokens_per_prompt=max_tokens_editing,
                 template_kwargs={
                     "style_guide": local_style_guide_text,
                     "preceding_passage": preceding_text_block,
@@ -312,8 +335,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
                 
                 prompt_text = generate_prompt_text(
                     prompt_template=ASCII_QA_PROMPT_BASE_TEXT,
-                    model="gpt-4o",
-                    max_tokens_per_prompt=10000,
+                    model=model,
+                    max_tokens_per_prompt=max_tokens_qa,
                     template_kwargs={
                         'no_issue_str': no_issue_str,
                         'original_text': text_block.original_content,
@@ -350,8 +373,8 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
 
             prompt_text = generate_prompt_text(
                 prompt_template=GLOBAL_REVIEW_PROMPT_BASE_TEXT,
-                model="gpt-4o",
-                max_tokens_per_prompt=100000,
+                model=model,
+                max_tokens_per_prompt=max_tokens_global_review,
                 template_kwargs={
                     'style_guide': deterministically_matched_global_style_rules,
                     'no_issue_str': no_issue_str,
