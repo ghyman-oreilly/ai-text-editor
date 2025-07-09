@@ -148,6 +148,11 @@ Provide one of the following:
 @click.option("--disable-qa-pass", "-q", is_flag=True, help="Disable QA pass of AI service calls designed to clean up any formatting errors introduced by the model. Model tends sporadically to convert some AsciiDoc formatting to Markdown during editing pass, likely due to large and complex prompting.")
 def cli(input_paths, load_data_from_json=None, disable_qa_pass=False):
     """Script for using AI to edit documents in alignment with an editorial stylesheet."""    
+    
+    if not input_paths:
+        click.echo("`input_paths` argument is required. Exiting.")
+        sys.exit(1)
+
     chapter_filepaths = resolve_input_paths(input_paths)  
     project_dir = chapter_filepaths[0].parent
     cwd = Path(os.getcwd())
