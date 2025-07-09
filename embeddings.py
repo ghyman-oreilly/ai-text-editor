@@ -1,6 +1,7 @@
 import logging
 import math
 import numpy as np
+import os
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
 
@@ -9,6 +10,9 @@ from models import Embedding
 
 
 logger = logging.getLogger(__name__)
+
+# disable parallelism to avoid deadlocks
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def write_npz_embeddings(filepath: Union[str, Path], items: List[Embedding]) -> None:
