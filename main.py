@@ -147,7 +147,7 @@ Provide one of the following:
 @click.option("--load-data-from-json", "-l", default=None, help="Provide the path to an optional JSON file of data backed up from a previous session. Useful for continuing your progress after a session is interrupted, without having to send all data back to the AI service. NOTE: Do not use this option if you've made changes in the repo since the backup file was produced, as it may overwrite your changes.")
 @click.option("--disable-qa-pass", "-q", is_flag=True, help="Disable QA pass of AI service calls designed to clean up any formatting errors introduced by the model. Model tends sporadically to convert some AsciiDoc formatting to Markdown during editing pass, likely due to large and complex prompting.")
 @click.option(
-    "--model",
+    "--model", "-m",
     type=click.Choice(["gpt-4o", "gpt-4.1", "o3"], case_sensitive=True),
     default="gpt-4o",
     help="Select your voice of AI model (default: gpt-4o)."
