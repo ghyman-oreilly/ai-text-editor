@@ -9,7 +9,7 @@ from typing import List, Union
 
 from ai_service import AIServiceCaller
 from embeddings import check_and_update_embedding_items
-from helpers import check_asciidoctor_installed, clean_response, get_text_file_content, get_json_file_content, write_text_to_file
+from helpers import clean_response, get_text_file_content, get_json_file_content, write_text_to_file
 from models import AsciiFile, load_style_guide
 from prompts import ASCII_QA_PROMPT_BASE_TEXT, COPYEDIT_PROMPT_BASE_TEXT, GLOBAL_REVIEW_PROMPT_BASE_TEXT, generate_prompt_text, generate_style_guide_text
 from read_files import read_files
@@ -221,10 +221,6 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False, model="gpt
         all_text_files: List[AsciiFile] = read_backup_from_json_file(json_input_path)
     else:
         # read repo files
-        if any(f.name.lower().endswith(('.asciidoc', '.adoc')) for f in sorted_filepaths):
-            # check for asciidoctor
-            check_asciidoctor_installed()
-
         click.echo("\nProgress: Script is running. This may take up to several minutes to complete. Please wait...\n")
 
         files_to_skip = [] # for use with potential future HTML use case
