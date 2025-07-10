@@ -13,9 +13,9 @@ A script for using AI to edit documents in alignment with an editorial styleshee
 1. Clone the repository or download the source files:
 
 	```bash
-	git@github.com:ghyman-oreilly/orm-ai-editor.git
+	git@github.com:ghyman-oreilly/ai-text-editor.git
 	
-	cd orm-ai-editor
+	cd ai-text-editor
 	```
 
 2. Install required dependencies:
@@ -66,4 +66,4 @@ After changes are made to `style_guide_local.json` or `wordlist.txt`, an additio
 
 ## Limitations
 
-* Only Asciidoc file format (.asciidoc or .adoc) currently supported. 
+* Only Asciidoc file format (`.asciidoc` or `.adoc`) currently supported. 
