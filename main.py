@@ -231,7 +231,7 @@ def cli(input_paths, load_data_from_json=None, disable_qa_pass=False, model="gpt
 
         # collect text file data
         click.echo("\nExtracting data from text files...\n")
-        all_text_files: List[AsciiFile] = read_files(sorted_filepaths)
+        all_text_files: List[AsciiFile] = read_files(sorted_filepaths, model)
 
         write_backup_to_json_file(all_text_files, backup_data_filepath)
         click.echo(f"\nText files data backed up to {backup_data_filepath}...\n")

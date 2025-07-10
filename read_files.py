@@ -205,7 +205,10 @@ def extract_ascii_blocks(
     return all_blocks
 
 
-def read_files(filepaths: List[Union[str, Path]]) -> Optional[List[AsciiFile]]:
+def read_files(
+        filepaths: List[Union[str, Path]],
+        model: str
+        ) -> Optional[List[AsciiFile]]:
     """
     From a list of filepaths, read text content into
     a list of AsciiFile and AsciiBlock model instances.
@@ -222,7 +225,7 @@ def read_files(filepaths: List[Union[str, Path]]) -> Optional[List[AsciiFile]]:
                    	index=i,
                     id=file_id,
                     filepath=path,
-                    text_blocks=extract_ascii_blocks(path, file_id)
+                    text_blocks=extract_ascii_blocks(path, file_id, model)
                 )
             )
         else:
