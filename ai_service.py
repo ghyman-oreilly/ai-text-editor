@@ -1,10 +1,8 @@
 from dotenv import load_dotenv
 import logging
 from pydantic import BaseModel
-import openai
 import os
 import random
-from sentence_transformers import SentenceTransformer
 import time
 from typing import Optional, List, Dict, Union, Literal
 
@@ -23,8 +21,6 @@ if not api_key:
         "The environment variable OPENAI_API_KEY is not set. "
         "Please set it to your OpenAI API key before running this script."
     )
-
-client = openai.OpenAI(api_key=api_key)
 
 class PromptContent(BaseModel):
     type: Union[Literal['input_text'], Literal['input_image']]
@@ -59,9 +55,17 @@ class AIServiceCaller:
             openai_embedding_model='text-embedding-3-small',
             st_embedding_model='BAAI/bge-small-en-v1.5'
             ):
+        from sentence_transformers import SentenceTransformer
         self.responses_model = responses_model
         self.openai_embedding_model = openai_embedding_model
         self.st_embedding_model = SentenceTransformer(st_embedding_model)
+        self._openai_client = None
+
+    def _get_openai_client(self):
+        if self._openai_client is None:
+            import openai
+            self._openai_client = openai.OpenAI(api_key=api_key)
+        return self._openai_client
 
     def create_prompt_object(
             self, 
@@ -101,6 +105,8 @@ class AIServiceCaller:
             )
 
     def call_ai_service(self, prompt: Prompt, delay: float = 0.5, max_retries: int = 5):
+        client = self._get_openai_client()
+
         for attempt in range(max_retries):
             try:
                 response = client.responses.create(

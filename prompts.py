@@ -1,12 +1,8 @@
-import hashlib
 import logging
-import math
-import numpy as np
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Union
 
 from embeddings import filter_by_vector_similarity
-from helpers import count_token_length, get_text_file_content
+from helpers import count_token_length
 from models import Embedding
 
 

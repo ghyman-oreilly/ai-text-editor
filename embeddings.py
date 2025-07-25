@@ -1,6 +1,5 @@
 import logging
 import math
-import numpy as np
 import os
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Union
@@ -16,6 +15,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def write_npz_embeddings(filepath: Union[str, Path], items: List[Embedding]) -> None:
+    import numpy as np
     contents = np.array([item.content for item in items], dtype=object)
     embeddings = np.array([item.embedding for item in items], dtype=np.float32)
     hashes = np.array([item.hash_val for item in items], dtype=object)
@@ -25,6 +25,7 @@ def write_npz_embeddings(filepath: Union[str, Path], items: List[Embedding]) -> 
 
 
 def read_npz_embeddings(filepath: Union[str, Path]) -> List[Dict[str, Any]]:
+    import numpy as np
     data = np.load(filepath, allow_pickle=True)
     contents = data["contents"]
     embeddings = data["embeddings"]

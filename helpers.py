@@ -3,8 +3,6 @@ import json
 import logging
 from pathlib import Path
 import re
-import subprocess
-import tiktoken
 from typing import Union
 
 from models import TextFileFormat
@@ -56,6 +54,7 @@ def count_token_length(text: str, model: str = "gpt-4o", encoding: str = "cl100k
 
     cl100k_base encoding is used by gpt-4o, 3o, gpt-4.1, etc.
     """
+    import tiktoken
     try:
         enc = tiktoken.encoding_for_model(model)
     except:
